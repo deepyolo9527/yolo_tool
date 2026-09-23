@@ -497,6 +497,7 @@ WorkerThread / YOLOTrainWorker
 ```bash
 # 源码运行（请先 conda activate 目标环境）
 python main.py
+```
 
 
 ### 13.5 平台与网络
