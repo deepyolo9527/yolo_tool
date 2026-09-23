@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>YOLO AI 训练系统 · 使用说明</title>
+<style>
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; margin: 0; padding: 0 0 60px; color: #1e293b; background: #f8fafc; line-height: 1.75; }
+  /* 左侧固定目录（浏览器查看时不随内容滚动） */
+  nav.menu { position: fixed; top: 0; left: 0; bottom: 0; width: 200px; box-sizing: border-box;
+             overflow-y: auto; background: #0f172a; padding: 16px 10px 24px; }
+  nav.menu b { display: block; color: #93c5fd; font-size: 14px; margin: 0 6px 10px; }
+  nav.menu a { display: block; color: #cbd5e1; text-decoration: none; font-size: 13px;
+               line-height: 1.5; padding: 5px 7px; border-radius: 6px; }
+  nav.menu a:hover { background: #1e293b; color: #ffffff; }
+  .doc { margin-left: 200px; }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 26px; }
+  h1 { font-size: 26px; color: #0f172a; margin: 26px 0 4px; }
+  .sub { color: #475569; font-size: 14px; margin: 0 0 6px; padding-bottom: 12px; border-bottom: 3px solid #3b82f6; }
+  h2 { font-size: 21px; margin: 42px 0 12px; padding: 8px 14px; background: #1e293b; color: #fff; border-radius: 8px; scroll-margin-top: 12px; }
+  h3 { font-size: 17px; margin: 26px 0 8px; color: #1d4ed8; border-left: 4px solid #3b82f6; padding-left: 10px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; color: #334155; }
+  p, li { font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; background: #fff; font-size: 13px; }
+  th, td { border: 1px solid #cbd5e1; padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #e2e8f0; }
+  code, kbd { font-family: Consolas, "Courier New", monospace; background: #e2e8f0; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  pre { background: #eef2f7; color: #0f172a; border: 1px solid #cbd5e1; border-left: 4px solid #3b82f6; padding: 10px 14px; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.6; }
+  pre code { background: none; color: inherit; padding: 0; }
+  .tip, .warn, .ok { border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-size: 13.5px; }
+  .tip { background: #eff6ff; border-left: 4px solid #3b82f6; }
+  .warn { background: #fef2f2; border-left: 4px solid #ef4444; }
+  .ok { background: #f0fdf4; border-left: 4px solid #22c55e; }
+  html { scroll-behavior: smooth; }
+  nav.menu a.active { background: #2563eb; color: #ffffff; font-weight: bold; }
+  @media (max-width: 560px) {
+    nav.menu { position: static; width: auto; bottom: auto; }
+    .doc { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<nav class="menu">
+<b>📖 目录</b>
+<a href="#s1">1. 系统总览</a>
+<a href="#s2">2. 快速上手路线</a>
+<a href="#s3">3. 环境配置</a>
+<a href="#s4">4. 数据标注</a>
+<a href="#s5">5. SAM视频追踪</a>
+<a href="#s6">6. 标签统计</a>
+<a href="#s7">7. 模型训练</a>
+<a href="#s8">8. 图片推理</a>
+<a href="#s9">9. 视频推理</a>
+<a href="#s10">10. 模型导出</a>
+<a href="#s11">11. 结果预览</a>
+<a href="#s12">12. 目录结构与配置文件</a>
+<a href="#s13">13. 常见问题 FAQ</a>
+</nav>
+<div class="doc">
+<div class="wrap">
+<h1>🤖 YOLO AI 训练系统 · 操作使用说明</h1>
+<p class="sub">v1.0.0 ｜ 一站式从数据智能标注到模型一键训练、推理 ｜ 共 9 个功能模块 ｜ 左侧目录可跳转，也可点右上角「🌐 浏览器打开」查看完整排版</p>
+
+<h2 id="s1">1. 系统总览</h2>
+<p>本软件是一个基于 PyQt5 的图形化 YOLO 工具箱，把「配环境 → 标数据 → 看分布 → 训练 → 验证 → 推理 → 导出」整条流程集中在一个窗口里完成，不需要手写命令行。</p>
+
+<h3>1.1 窗口结构</h3>
+<table>
+<tr><th>区域</th><th>内容</th></tr>
+<tr><td>顶部标题栏</td><td>软件名称与标语、右侧「● 就绪」状态、<code>ℹ️ 关于系统</code>（打开本说明）、<code>💬 微信公众号</code>、<code>© YOLO深度学习 出品</code>（点击显示公众号二维码）、实时时钟</td></tr>
+<tr><td>左侧导航栏</td><td>「⚙️ 环境配置」独立置顶，其余归为三个可折叠分组：<b>🗂️ 数据处理</b>（✏️ 数据标注 / 🎬 SAM视频追踪 / 📊 标签统计）、<b>🔥 YOLO训练</b>（🚀 模型训练 / 📦 模型导出）、<b>⚡ YOLO推理</b>（🖼️ 图片推理 / 🎬 视频推理 / 📈 结果预览）。点击分组标题（▸/▾）展开或收起，点击页面项会自动展开其所属分组</td></tr>
+<tr><td>右侧内容区</td><td>当前页面的工作区，纵向可滚动。每个页面都由若干白色卡片分区：<b>参数配置卡 → 执行按钮卡 → 结果/图表卡 → 📋 日志卡</b></td></tr>
+</table>
+<div class="tip">鼠标悬停在导航项上会显示该模块的功能提示；把窗口拉宽或拉窄时界面字号与间距会自动缩放，图表也会跟随画布自适应。</div>
+
+<h3>1.2 九个模块一览</h3>
+<table>
+<tr><th>模块</th><th>解决什么问题</th><th>产出物</th></tr>
+<tr><td>⚙️ 环境配置</td><td>自动安装 Miniconda、创建虚拟环境、装齐 ultralytics/PyTorch 等依赖</td><td>一个可直接跑训练/推理的 conda 环境</td></tr>
+<tr><td>✏️ 数据标注</td><td>画矩形框、SAM 点击/框选分割、AI 模型批量预标注</td><td>YOLO 格式 <code>图片名.txt</code> + <code>classes.txt</code></td></tr>
+<tr><td>🎬 SAM视频追踪</td><td>视频首帧框一次，SAM2 逐帧自动分割，免逐帧手标</td><td>逐帧图片 + 逐帧 YOLO 标签 + <code>session.json</code></td></tr>
+<tr><td>📊 标签统计</td><td>看类别是否均衡、目标大小与宽高比是否适配 <code>imgsz</code></td><td>统计表 + 5 类可视化图表 PNG</td></tr>
+<tr><td>🚀 模型训练</td><td>可视化配置全部训练参数并一键启动</td><td><code>runs/train/实验名/</code>（权重、曲线、配置）</td></tr>
+<tr><td>🖼️ 图片推理</td><td>单张/批量图片检测，原图与结果对比查看</td><td><code>输出目录/predict/</code> 标注图、可选 TXT</td></tr>
+<tr><td>🎬 视频推理</td><td>视频逐帧检测并实时预览</td><td><code>输出目录/video_output.mp4</code>、可选逐帧 TXT</td></tr>
+<tr><td>📦 模型导出</td><td>把 <code>.pt</code> 转成 ONNX 等部署格式</td><td><code>输出目录/模型名_格式/</code> 内的模型文件</td></tr>
+<tr><td>📈 结果预览</td><td>回看实验配置、图表，多实验曲线对比选优</td><td>对比曲线图 PNG</td></tr>
+</table>
+
+<h2 id="s2">2. 快速上手路线</h2>
+<p>第一次使用，按下面顺序走一遍即可跑通全流程：</p>
+<ol>
+<li><b>配环境</b>：打开「⚙️ 环境配置」→ 保持默认环境名 <code>yolo_env</code>、Python <code>3.10</code> → 有 NVIDIA 显卡时勾选「使用GPU训练」→ 点 <code>⚙️ 一键配置环境</code>。弹窗提示完成后，按提示在 Anaconda Prompt 里 <code>conda activate yolo_env</code> 并<b>重新启动本程序</b>。</li>
+<li><b>准备数据</b>：图片放一个文件夹。「✏️ 数据标注」→ <code>📁 打开图片文件夹</code> → <code>📂 打开标签文件夹</code>（没有就先新建一个空文件夹）→ 在「🏷️ 类别与模型」里 <code>🏷️ 标注类别管理</code> 添加类别。然后 <b>W 画框</b> 或 <code>🤖 AI预标注</code> 快速起步。</li>
+<li><b>查分布</b>：「📊 标签统计」选择标签目录（可带数据集 YAML）→ <code>🚀 开始统计</code>，确认类别均衡度与目标宽高比。</li>
+<li><b>建数据集配置</b>：手写 <code>data.yaml</code>（见 <a href="#s7">第 7 节</a>），放到 <code>datasets/你的数据集/</code>。</li>
+<li><b>训练</b>：「🚀 模型训练」选权重与 <code>data.yaml</code> → <code>🚀 开始训练</code>。</li>
+<li><b>看结果</b>：「📈 结果预览」选项目目录 <code>runs/train</code> → 勾选实验 → 查看配置/图表，或 <code>📊 对比勾选实验</code>。</li>
+<li><b>验证效果</b>：「🖼️ 图片推理」/「🎬 视频推理」填模型路径与内容 → <code>🚀 开始推理</code>。</li>
+<li><b>部署</b>：「📦 模型导出」选 <code>best.pt</code> 与格式 → <code>🚀 开始导出</code>。</li>
+</ol>
+<div class="ok">软件自带示例数据 <code>datasets/coco8</code>（8 张图）与权重 <code>weights/</code>（yolo11n / yolo26n / yolov8n 等）、SAM2 模型 <code>sam/sam2_s.pt</code>，可先用它们把流程点通，再换自己的数据。</div>
+
+<h2 id="s3">3. 环境配置（一键环境配置）</h2>
+<p>页面标题「⚙️ 一键环境配置」，副标题「自动配置YOLO训练所需的Python环境和依赖包」。它把装 Miniconda、建环境、装依赖这些最容易出错的命令全部图形化，日志与进度条实时可见。</p>
+
+<h3>3.1 参数说明</h3>
+<table>
+<tr><th>界面项</th><th>含义</th><th>默认值</th></tr>
+<tr><td>📁 环境名称</td><td>要创建/复用的 conda 环境名</td><td><code>yolo_env</code></td></tr>
+<tr><td>🐍 Python版本</td><td>环境的 Python 版本</td><td><code>3.10</code>（建议保持 3.9~3.11）</td></tr>
+<tr><td>📦 Conda路径</td><td>指定 conda 可执行文件位置</td><td>留空 = 自动检测</td></tr>
+<tr><td>💻 硬件加速 →「使用GPU训练」</td><td>勾选则安装 CUDA 版 PyTorch</td><td>不勾选（装 CPU 版）</td></tr>
+</table>
+<p>自动检测顺序：环境变量 <code>%CONDA_EXE%</code> → 依次在 <code>%USERPROFILE%</code>、<code>C:\</code>、<code>D:\</code>、<code>E:\</code>、<code>F:\</code> 下查找 <code>miniconda3/anaconda3\Scripts\conda.exe</code> → 最后查 <code>PATH</code>。本机的 conda 若装在 <code>E:\ProgramData\miniconda3</code> 这类位置，也能被扫描到；扫描不到时把 conda.exe 完整路径填进「Conda路径」即可。</p>
+
+<h3>3.2 操作步骤</h3>
+<ol>
+<li>填写/确认上面四项参数，点 <code>⚙️ 一键配置环境</code>。</li>
+<li>观察「📊 安装进度」进度条与「📋 配置日志」。执行顺序固定为：检测 Conda（10%）→ 没有则下载安装 Miniconda（30%）→ <code>conda create -n 环境名 python=版本 pip -y</code>（40%）→ 依次安装 <code>ultralytics</code>、<code>pyqt5</code>、<code>opencv-python</code>、<code>pyyaml</code>（60/70/80/90%）→ 安装 <code>torch torchvision</code>（GPU 走 cu121 官方源，失败自动降级 CPU 版）→ 100%。</li>
+<li>全部下载走清华 PyPI 镜像（<code>https://pypi.tuna.tsinghua.edu.cn/simple</code>），国内网络较快。</li>
+<li>完成后弹窗给出三条后续操作：① <code>conda activate 环境名</code>；② 该环境 Python 解释器的绝对路径；③ <b>在激活后的环境中重新启动本程序</b>，训练/推理才会用到新装的依赖。</li>
+</ol>
+<div class="warn">注意：环境名已存在时不会报错，日志显示「环境 xxx 已存在」并继续装依赖；某个包安装失败不会中断流程，最后汇总为「环境已就绪，但以下依赖安装失败: …」，可对照日志单独重装。中途可点 <code>⏹️ 停止配置</code>。</div>
+<div class="tip">Python版本框不校验格式，随意填写会让创建环境失败；无显卡或不确定驱动版本时，建议先不勾 GPU，之后手动执行 <code>pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121</code>。</div>
+
+<h2 id="s4">4. 数据标注（✏️ 数据标注）</h2>
+<p>页面说明：「手动框标注 / SAM 图片分割 / AI 预标注，支持类别管理与标注统计」。这是最核心的标数据页面，中间是图片画布，右侧一列功能卡片。</p>
+
+<h3>4.1 界面控件</h3>
+<table>
+<tr><th>位置</th><th>控件</th><th>作用</th></tr>
+<tr><td>顶部工具行</td><td><code>📁 打开图片文件夹</code> / <code>📂 打开标签文件夹</code> / <code>🤖 AI预标注</code> / <code>🔍 检查标注</code> / <code>🎬 SAM视频追踪</code> / <code>⚙️ SAM设置</code></td><td>装载数据、批量预标注、质检、跳转视频追踪页、SAM 参数设置</td></tr>
+<tr><td>第二行</td><td><code>⬅ 上一张(A)</code> / <code>➡ 下一张(D)</code> / <code>✏️ 画标注框(W)</code>（可勾选的开关按钮）/ <code>✂️ SAM图片分割</code>（可勾选）/ 状态标签</td><td>翻页与两种标注模式互斥切换；状态标签显示当前图片名与模式</td></tr>
+<tr><td>🏷️ 类别与模型</td><td><code>SAM模型:</code> 下拉、<code>类别查看/选择:</code> 下拉、<code>🏷️ 标注类别管理</code></td><td>选择当前绘制使用的类别（显示形式为 <code>ID. 类别名</code>，ID 从 0 开始）、选择 SAM 权重、增删改类别</td></tr>
+<tr><td>🖼️ 标注框列表</td><td>当前图的框列表、<code>🗑️ 删除选中框(Del)</code>、<code>🗑️ 删除所有框</code></td><td>查看/删除本图的标注框</td></tr>
+<tr><td>📁 文件列表</td><td>图片文件列表、<code>🗑️ 删除选中文件</code></td><td>点击列表项直接跳到该图；删除原图片文件</td></tr>
+<tr><td>📊 标注统计</td><td>统计摘要标签 + 只读明细文本框 + <code>🔄 刷新统计</code></td><td>显示已标注张数、各类别框数等</td></tr>
+</table>
+
+<h3>4.2 上手步骤</h3>
+<ol>
+<li><b>打开图片文件夹</b>：支持 <code>png / jpg / jpeg / bmp / webp / tiff / tif</code>，按文件名自然排序，自动读取首张。</li>
+<li><b>打开标签文件夹</b>：标签写入这里。若未手动选择，默认落在图片目录路径后加 <code>_labels</code> 的同级文件夹。</li>
+<li><b>建类别</b>：点 <code>🏷️ 标注类别管理</code> → <code>➕ 添加类别</code>（输入「类别名称:」）→ <code>📥 导入类别文件</code>（从 <code>classes.txt</code> 等每行一个类别的文本导入，可选合并或替换）→ <code>🗑 删除选中</code> → <code>✅ 确定</code>。类别会自动写入 <b>标签目录下的 <code>classes.txt</code></b>。</li>
+<li><b>画框</b>：勾选 <code>✏️ 画标注框(W)</code> → 在图上左键按住拖拽出矩形，松开即生成并<b>立即保存</b>到该图的 <code>.txt</code>。过小的框（宽或高小于 0.01）会被忽略。切换类别只需在「类别查看/选择」下拉里选。</li>
+<li><b>翻页</b>：按 <code>A</code>/<code>D</code> 或点按钮；切换前会自动保存当前图标注，切走再回来不会丢。</li>
+<li><b>删除</b>：在「🖼️ 标注框列表」选中某框后按 <code>Del</code> 或点 <code>🗑️ 删除选中框</code>；<code>🗑️ 删除所有框</code> 会弹确认。<b>没有撤销功能</b>，误删只能重画。</li>
+</ol>
+
+<h3>4.3 AI 预标注（🤖）</h3>
+<p>用已有的 YOLO 权重先把图片批量标一遍，人工再修，效率远高于纯手画。弹窗内可设置：</p>
+<table>
+<tr><th>项</th><th>选项与默认</th></tr>
+<tr><td>标注范围</td><td><code>仅当前图片</code>（默认） / <code>所有未标注图片</code> / <code>所有图片</code></td></tr>
+<tr><td>写入模式</td><td><code>追加</code>（默认，保留已有框） / <code>覆盖</code>（清空后写入）</td></tr>
+<tr><td>模型：</td><td>点击 <code>📁</code> 选 <code>.pt</code>；下拉列表自动扫描 <code>weights/</code> 下不含 sam 的权重</td></tr>
+<tr><td>置信度阈值 / NMS IoU</td><td>默认 <code>0.25</code>（0.05~0.95）/ <code>0.7</code></td></tr>
+<tr><td>跳过类别校验</td><td>勾选后模型类别 ID 直接写入标签，类别名取模型输出并<b>更新 classes.txt</b>；会弹二次确认</td></tr>
+</table>
+<p>点 <code>🚀 开始标注</code> 后台执行（可 <code>⏹ 停止</code>）。每个框写成一行的 <code>class_id cx cy w h</code>（坐标归一化、6 位小数），并额外生成同名 <code>.mark</code> 文件标记该图由 AI 产出，方便后续人工复核与筛除。完成后自动刷新类别、画面与统计。</p>
+<div class="warn">不勾选「跳过类别校验」时，模型输出的类别必须与 <code>classes.txt</code> 的行序一致（ID 从 0 计，第 i 行 = ID i）。不同模型内置类别顺序不同（例如 yolo11n.pt 的顺序与标准 COCO 并不完全相同），跨模型使用请优先用「跳过类别校验」或先对齐 classes.txt。</div>
+
+<h3>4.4 SAM 图片分割（✂️）</h3>
+<ol>
+<li>在「SAM模型:」下拉选择 SAM 权重（自动扫描 <code>sam/</code> 与 <code>weights/</code> 下名字含 <code>sam</code> 的 <code>.pt</code>，如 <code>sam2_s.pt</code>）。</li>
+<li>点 <code>✂️ SAM图片分割</code> 进入分割模式，此时会<b>后台自动加载模型</b>；在画面上 <b>单击</b> 是点提示（point prompt），<b>拖框</b> 是框提示（box prompt），返回的掩码自动转成外接矩形加入标注框。</li>
+<li>按 <code>Esc</code> 或再次点击按钮退出。</li>
+</ol>
+<div class="tip">模型较大时首次加载需要时间，加载未完成时点击会提示「SAM模型尚未加载完成，加载后请重新点击目标」，等提示消失后重新点击即可。</div>
+
+<h3>4.5 质检与 SAM 参数</h3>
+<ul>
+<li><code>🔍 检查标注</code>：弹框统计哪些图片已标注、哪些还是空的，用于收尾查漏。</li>
+<li><code>⚙️ SAM设置</code>：分「✂️ SAM图像分割设置」和「🎬 SAM视频追踪设置」两组。图像组可改 <code>推理图像尺寸(imgsz)</code>（可选 256/512/768/1024/1280/1536/2048，默认 1024，越小越快、大目标越容易漏）；视频组含 <code>质量预设</code>（<code>均衡</code>默认 / <code>严格防漂移</code> / <code>快速运动</code> / <code>自定义</code>）与 <code>最小面积比</code>、<code>最大面积比</code>、<code>最小前后IoU</code>、<code>最大中心距离比</code>、<code>最大单帧面积比</code>。「均衡」预设为 0.02 / 1.25 / 0.6 / 1.5 / 0.85。改动后点 <code>💾 保存</code> 写入 <code>configs/sam_settings.json</code>，<code>↩️ 恢复默认</code> 可回退。</li>
+</ul>
+
+<h2 id="s5">5. SAM视频追踪（🎬）</h2>
+<p>页面说明：「首帧画框一次，SAM2 逐帧自动追踪，按帧导出图片与 YOLO 标签」。适合把一段视频快速变成几千张带标注的训练图。</p>
+
+<h3>5.1 界面控件</h3>
+<table>
+<tr><th>卡片</th><th>控件</th><th>说明</th></tr>
+<tr><td>🎬 视频与输出</td><td><code>🎬 选择视频</code>、<code>📂 选择输出目录</code>、<code>🖼 重新读取视频</code></td><td>支持 <code>mp4/avi/mov/mkv/flv/wmv</code>，选完自动读首帧；输出默认在视频同目录的 <code>视频名_tracking</code>；重读视频会用首帧覆盖当前画面</td></tr>
+<tr><td>🤖 模型与参数</td><td><code>SAM2模型:</code> 下拉、<code>保存间隔: 每 N 帧</code></td><td>默认 <b>每 30 帧</b>导出一次（范围 1~100000）；SAM2 模型放 <code>sam/</code> 或 <code>weights/</code></td></tr>
+<tr><td>🎯 追踪目标</td><td>目标列表、<code>✏️ 修改选中类别</code>、<code>🎯 重新框选选中目标(需暂停)</code>、<code>⏹ 结束选中目标</code>、<code>🧹 清空所有目标</code></td><td>列表项格式 <code>#ID 类别名 [状态]</code>，状态为 追踪中 / 已丢失 / 已结束，每个目标一种颜色</td></tr>
+<tr><td>运行行</td><td><code>🚀 开始追踪</code>、<code>⏸ 暂停</code>、<code>⏹ 停止</code>、<code>帧号: -  时间: -</code></td><td>暂停与停止在未运行时禁用；暂停后按钮变为 <code>▶ 继续</code></td></tr>
+<tr><td>右侧</td><td>状态标签、进度条、视频画布、时间轴日志、<code>📂 打开输出目录</code></td><td>画布实时显示带彩色轮廓的当前帧</td></tr>
+</table>
+
+<h3>5.2 上手步骤</h3>
+<ol>
+<li><code>🎬 选择视频</code> → 首帧出现在画布上。</li>
+<li>确认或修改输出目录（<code>📂 选择输出目录</code>）。</li>
+<li><b>在首帧上左键拖框</b>画出第一个目标，弹出「设置类别」输入「类别名称:」；同名类别自动复用已有 ID，新名称递增分配 ID。可继续画多个目标。</li>
+<li><code>🚀 开始追踪</code>。逐帧运行 SAM2，画布与进度条、帧号同步更新。</li>
+<li>追踪中仍可 <b>直接画新框</b> 追加目标。</li>
+<li>目标跟丢（连续 <b>15 帧</b>未匹配）后列表显示「已丢失」。处理办法：点 <code>⏸ 暂停</code> → 在目标列表选中该目标 → <code>🎯 重新框选选中目标(需暂停)</code> → 在当前帧重画一个正确的框 → 自动继续追踪。</li>
+<li>目标离开画面不想再导出：<code>⏹ 结束选中目标</code>（该目标之后不再写入标签）。</li>
+<li>结束后可 <code>🧹 清空所有目标</code>（需先停止追踪，弹确认）换一批目标重新跑。</li>
+</ol>
+
+<h3>5.3 输出内容</h3>
+<pre><code>输出目录/
+├── images/frame_000000.jpg   # 每保存帧的原图
+├── labels/frame_000000.txt   # 同帧号的 YOLO 标签: class_index cx cy w h（6 位小数）
+└── session.json              # 本次会话记录: 视频路径/输出目录/SAM2模型/总帧数/fps/已处理帧/目标列表
+</code></pre>
+<div class="warn">常见拦截提示：「请先选择视频」「请先设置输出目录」「请先在首帧上框选追踪目标」「未找到SAM2模型，请将 sam2_*.pt 放入 sam/ 目录」「需要安装 opencv-python」「请先开始追踪…」「请先点击【暂停】…」「请先在列表中选中要补框的目标」「请先停止追踪后再清空目标」。画框最小 5 像素。</div>
+
+<h2 id="s6">6. 标签统计（📊）</h2>
+<p>页面说明：「统计数据集标签数量与目标框宽高分布，支持train/valid/test分割统计」。回答两个问题：类别是否均衡、目标尺寸是否适合当前 <code>imgsz</code>。</p>
+
+<h3>6.1 界面与产出</h3>
+<table>
+<tr><th>卡片</th><th>内容</th></tr>
+<tr><td>输入</td><td><code>标签目录:</code>（占位「请选择标签目录」）+ <code>📁 浏览</code>；<code>数据集YAML:</code>（占位「可选：数据集YAML文件」）+ <code>📄 选择</code>，用于把类别 ID 映射成名称；按钮 <code>🚀 开始统计</code></td></tr>
+<tr><td>📈 类别数量统计</td><td>表格：类别ID、类别名称、各分割列（训练集/验证集/测试集）、总数</td></tr>
+<tr><td>📐 宽高比与尺寸分布</td><td>整体摘要（总框数、宽/高、宽高比、形态分布、面积分布）+ 8 列表格：类别ID、类别名称、数量、<code>宽 均值/中位/P5~P95</code>、<code>高 均值/中位/P5~P95</code>、<code>宽高比 均值/中位/P5~P95</code>、宽范围、高范围</td></tr>
+<tr><td>🖼️ 可视化图表</td><td><code>数据范围:</code>（全部数据 + 各分割）；<code>图表类型:</code> 5 种；<code>💾 保存图表</code>；画布自动随窗口缩放</td></tr>
+<tr><td>📋 操作日志</td><td>统计与保存过程的文字记录</td></tr>
+</table>
+
+<h3>6.2 五种图表怎么看</h3>
+<table>
+<tr><th>图表</th><th>看什么</th></tr>
+<tr><td>类别数量分布</td><td>Top 30 类别横向条形，识别样本过少的类别（考虑补标或合并）</td></tr>
+<tr><td>宽高比分布直方图</td><td>对数横轴的 w/h 分布，参考线 1.0、1/3、3：绝大多数目标应落在 0.33~3 之间</td></tr>
+<tr><td>宽/高分布直方图</td><td>左右两幅分别看归一化宽与高的分布，标出均值/中位/P5/P95，用于估算最小目标像素尺寸</td></tr>
+<tr><td>按类别 宽-高 散点</td><td>对数-对数坐标按类别着色（Top 12），参考线 W=H 与 3:1，快速区分细长类与方形类</td></tr>
+<tr><td>按类别宽高比箱线</td><td>框数 ≥20 的类别取 Top 15，比较各类别形状离散度与离群值</td></tr>
+</table>
+<p>形态分档口径：宽高比 <code>横长≤0.33 / 偏宽0.33~0.8 / 近方0.8~1.25 / 偏高1.25~3 / 竖长≥3</code>；面积分档 <code>小目标≤1% / 中小1~5% / 中大5~15% / 大目标≥15%</code>（均为占整图比例）。</p>
+<div class="tip">目录结构含 <code>train</code>/<code>valid</code>(或 <code>val</code>)/<code>test</code> 子目录时会分集统计并给出「数据范围」下拉切换；若子目录里没有标签，则回退为整目录递归统计。标签行不足 5 列（例如只写了 <code>class</code>）会被跳过，提示「未找到有效的 YOLO 标签框（需要 5 列：class cx cy w h）」。</div>
+
+<h2 id="s7">7. 模型训练（🚀 YOLO训练）</h2>
+<p>页面说明：「配置训练参数，启动YOLO模型训练」。所有参数按卡片分组，鼠标悬停任意参数会显示它对应 ultralytics 的真实键名（如 <code>epochs</code>、<code>lr0</code>）。</p>
+
+<h3>7.1 卡片「📦 模型与数据」</h3>
+<table>
+<tr><th>界面项</th><th>键</th><th>默认值</th></tr>
+<tr><td>模型路径:</td><td><code>model</code></td><td><code>weights/yolo26n.pt</code>（预训练权重，<code>📁</code> 选 <code>.pt</code>）</td></tr>
+<tr><td>模型YAML:</td><td><code>yaml</code></td><td><code>ultralytics/.../cfg/models/26/yolo26.yaml</code></td></tr>
+<tr><td>数据集配置:</td><td><code>data</code></td><td><code>datasets/coco8/coco8.yaml</code></td></tr>
+<tr><td>超参数YAML:</td><td><code>hyp_yaml</code></td><td><code>ultralytics/.../cfg/default.yaml</code></td></tr>
+<tr><td>项目目录:</td><td><code>project</code></td><td><code>runs/train</code></td></tr>
+<tr><td>实验名称:</td><td><code>name</code></td><td><code>exp</code></td></tr>
+<tr><td><code>🔄 加载超参数</code></td><td>—</td><td>从上方「超参数YAML」文件导入超参，<b>不会</b>覆盖模型/数据集路径</td></tr>
+</table>
+<div class="tip">同时填了「模型路径」和「模型YAML」时，行为是先按 YAML 搭网络结构再加载 <code>.pt</code> 权重（适合换类别数微调）；只填模型路径则直接加载完整模型（最常用，也最省事）。想跑自己类别数的模型，推荐只填 <code>model</code> 并在 <code>data.yaml</code> 里写 <code>nc/names</code>。</div>
+
+<p>数据集 <code>data.yaml</code> 最小示例：</p>
+<pre><code>path: E:/data/myset        # 数据集根目录
+train: images/train        # 相对 path 或绝对路径
+val: images/valid
+test: images/test          # 可选
+
+names:                     # 顺序必须与 classes.txt 一致，ID 从 0 开始
+  0: person
+  1: car
+</code></pre>
+
+<h3>7.2 卡片「⚙️ 训练参数」</h3>
+<table>
+<tr><th>界面项</th><th>键 / 默认</th><th>怎么调</th></tr>
+<tr><td>训练轮数</td><td><code>epochs</code> = 100（1~10000）</td><td>小数据集 100~300；先用 50 轮试跑通</td></tr>
+<tr><td>批次大小</td><td><code>batch</code> = 16</td><td>显存不够就调小（8/4/2），或设 -1 自动</td></tr>
+<tr><td>图像尺寸</td><td><code>imgsz</code> = 640（32~4096）</td><td>目标很小（标签统计里宽/高 P95 &lt; 0.05）时提高到 960/1280</td></tr>
+<tr><td>设备</td><td><code>device</code> = <code>0</code></td><td>单张显卡填 0，多卡填 0,1；<b>无 GPU 必须改成 <code>cpu</code></b>，否则启动即报错</td></tr>
+<tr><td>优化器</td><td><code>optimizer</code> = SGD（列表顺序 SGD / Adam / AdamW / NAdam）</td><td>小数据集常换 AdamW 并把 lr0 降到 0.001</td></tr>
+<tr><td>随机种子</td><td><code>seed</code> = 0</td><td>固定后可复现实验</td></tr>
+<tr><td>初始学习率</td><td><code>lr0</code> = 0.01</td><td>发散（loss 变 NaN）就下调到 0.001</td></tr>
+<tr><td>最终学习率</td><td><code>lrf</code> = 0.01</td><td>结束学习率 = lr0 × lrf</td></tr>
+<tr><td>动量</td><td><code>momentum</code> = 0.937</td><td>一般不动</td></tr>
+<tr><td>早停耐心</td><td><code>patience</code> = 100（0~10000）</td><td>验证指标连续多少轮无提升就停</td></tr>
+<tr><td>保存周期</td><td><code>save_period</code> = 50</td><td>每多少轮存一次中间权重</td></tr>
+<tr><td>关闭马赛克</td><td><code>close_mosaic</code> = 10</td><td>最后 N 轮关闭 Mosaic，利于收敛</td></tr>
+</table>
+
+<h3>7.3 卡片「🎨 数据增强」</h3>
+<table>
+<tr><th>界面项</th><th>键 / 默认</th><th>说明</th></tr>
+<tr><td>色调</td><td><code>hsv_v</code> = 0.4</td><td>实际为 HSV 明度扰动强度</td></tr>
+<tr><td>旋转 / 平移 / 缩放 / 剪切 / 透视</td><td><code>degrees</code> 0.0、<code>translate</code> 0.1、<code>scale</code> 0.5、<code>shear</code> 0.0、<code>perspective</code> 0.0</td><td>目标方向固定（如俯拍缺陷、文字）时保持 0，否则几何增强会引入无效样本</td></tr>
+<tr><td>上下翻转 / 左右翻转</td><td><code>flipud</code> 0.0、<code>fliplr</code> 0.5</td><td>类别语义与朝向有关（文字、上下区分的缺陷）时把对应项设 0</td></tr>
+<tr><td>马赛克 / 混合 / 复制粘贴</td><td><code>mosaic</code> 1.0、<code>mixup</code> 0.0、<code>copy_paste</code> 0.0</td><td>数据少时提高后两者</td></tr>
+<tr><td>擦除 / 裁剪比例</td><td><code>erasing</code> 0.4、<code>crop_fraction</code> 1.0</td><td>—</td></tr>
+<tr><td>自动增强</td><td><code>auto_augment</code> = <code>randaugment</code></td><td>留空则不传该参数</td></tr>
+<tr><td>训练集比例</td><td><code>fraction</code> = 1.0</td><td>做快速实验时可设 0.1 只取 10% 数据</td></tr>
+<tr><td>IoU阈值 / 最大检测数</td><td><code>iou</code> 0.7、<code>max_det</code> 300</td><td>NMS 相关，密集小目标可提高 max_det</td></tr>
+</table>
+
+<h3>7.4 卡片「🔧 其他选项」（复选框）</h3>
+<p>默认勾选：<b>余弦学习率</b>(<code>cos_lr</code>)、<b>混合精度训练</b>(<code>amp</code>)、<b>保存权重</b>(<code>save</code>)、<b>显示标签</b>(<code>show_labels</code>)、<b>显示置信度</b>(<code>show_conf</code>)、<b>绘制图表</b>(<code>plot</code>)、<b>验证集评估</b>(<code>val</code>)、<b>详细输出</b>(<code>verbose</code>)；默认不勾选：<b>保存标签</b>(<code>save_txt</code>)、<b>保存置信度</b>(<code>save_conf</code>)、<b>保存裁剪图</b>(<code>save_crop</code>)、<b>可视化</b>(<code>visualize</code>)。</p>
+<div class="tip">「绘制图表」(<code>plot</code>) 必须勾选，否则「📈 结果预览」里看不到 <code>results.png</code>、混淆矩阵等图。「混合精度训练」在部分老显卡上有兼容问题，报错时可取消勾选。</div>
+
+<h3>7.5 运行、停止与配置复用</h3>
+<ol>
+<li>点 <code>🚀 开始训练</code> → 后台线程启动训练，界面不卡死，「📋 训练日志」以等宽字体实时滚动输出；结束时写入 <code>[完成] …</code> 或 <code>[错误] …</code>。</li>
+<li>运行中再点开始会提示「任务正在运行中」；数据集配置路径无效会提示「请选择有效的数据集配置文件」。</li>
+<li>点 <code>⏹️ 停止训练</code>（初始禁用，运行后可用）会请求 ultralytics 优雅停止当前 epoch，日志提示「正在停止训练...」。</li>
+<li><code>💾 保存配置</code>：把当前<b>全部</b>参数与路径存成 YAML，默认目录 <code>configs/train_configs/</code>（自动创建），默认文件名 <code>train_config_年月日_时分秒.yaml</code>，内含 <code>__saved_at__</code> 时间戳。保存成功弹窗会说明「下次可通过「导入配置」一键载入」。</li>
+<li><code>📥 导入配置</code>：选择该 YAML 一键还原所有参数与路径（文件中没有的键保持当前值不动）。格式不是键值对时报「配置文件格式无效，应为键值对形式的 YAML」。</li>
+</ol>
+<p>训练产物在 <code>runs/train/实验名/</code>：</p>
+<pre><code>runs/train/exp/
+├── args.yaml        # 本次训练实际使用的全部参数
+├── results.csv      # 逐轮指标（结果预览与曲线对比都读它）
+├── weights/last.pt  # 最后一轮权重
+├── weights/best.pt  # 验证指标最优权重 ← 推理/导出通常用这个
+└── *.png            # results.png、混淆矩阵、标签相关图等（需勾选 plot）
+</code></pre>
+
+<h2 id="s8">8. 图片推理（🖼️）</h2>
+<p>页面说明：「使用训练好的YOLO模型对图片进行目标检测」。</p>
+<table>
+<tr><th>界面项</th><th>说明 / 默认</th></tr>
+<tr><td>模型路径:</td><td><code>weights/yolo26n.pt</code>，<code>📁</code> 选 <code>.pt</code>（推理自己的模型时填 <code>runs/train/exp/weights/best.pt</code>）</td></tr>
+<tr><td>图片/目录:</td><td>占位「请选择图片文件或目录」，按钮 <code>🖼️</code> 可<b>多选</b>文件（用 <code>;</code> 拼接）或直接选目录</td></tr>
+<tr><td>输出目录:</td><td>默认 <code>runs/detect</code></td></tr>
+<tr><td>置信度 / IoU</td><td><code>0.25</code> / <code>0.7</code>（均 0.01~1.0）</td></tr>
+<tr><td>设备</td><td><code>0</code>（无 GPU 改 <code>cpu</code>）</td></tr>
+<tr><td>类别</td><td>占位「如: 0,1 或 person,car」，留空表示全部类别；先按数字 ID 解析，失败则按类别名</td></tr>
+<tr><td>保存TXT / 保存图像</td><td>保存TXT 默认关；<b>保存图像默认勾选</b></td></tr>
+</table>
+<p><b>操作：</b>填好模型与图片 → <code>🚀 开始推理</code> → 进度条推进 → 在「👁️ 推理可视化」里用 <code>◀</code>/<code>▶</code> 翻看「原图 / 检测结果」左右对比（计数标签显示 <code>当前 / 总数</code>，悬停可看文件名；最多缓存最近 50 组）。日志区在「📋 推理日志」。</p>
+<p><b>结果位置：</b><code>输出目录/predict/</code> 下与原图同名的标注图；勾选「保存TXT」时同目录输出 YOLO 格式标签。</p>
+<div class="warn">校验提示：「请选择模型文件」「请选择图片文件」「未找到有效的图片文件」「推理任务正在运行中」。推理期间「开始推理」按钮禁用。</div>
+
+<h2 id="s9">9. 视频推理（🎬）</h2>
+<p>页面说明：「使用训练好的YOLO模型对视频进行目标检测」。与图片推理基本同构，差异如下：</p>
+<ul>
+<li><code>视频文件:</code> 占位「请选择视频文件」，<b>单选</b>，支持 <code>mp4/avi/mov/mkv</code>。</li>
+<li>多一个 <code>帧间隔:</code>，默认 <b>1</b>（1~30）。设为 N 表示每 N 帧处理一次，可用于长视频提速；同时影响输出速度。</li>
+<li>复选框为 <code>保存TXT</code> 与 <b><code>保存视频</code></b>（默认勾选）。</li>
+<li>运行行有状态标签「当前帧: 0」（运行时递增）和 <code>📂 打开输出视频</code>（初始禁用，输出文件生成后才可点；未生成时提示「输出视频尚未生成」）。</li>
+<li>可视化区左「原始画面」右「检测结果」，<b>逐帧实时刷新</b>，没有暂停/播放控制；需要中止只能点 <code>⏹️ 停止</code>。</li>
+</ul>
+<p><b>输出：</b>标注视频固定为 <code>输出目录/video_output.mp4</code>；勾选「保存TXT」时逐帧标签写到 <code>输出目录/labels/000000.txt</code>（按帧号命名）。</p>
+
+<h2 id="s10">10. 模型导出（📦）</h2>
+<p>页面说明：「将训练好的YOLO模型导出为不同格式，便于部署和推理」。</p>
+<table>
+<tr><th>界面项</th><th>说明 / 默认</th></tr>
+<tr><td>模型路径:</td><td>占位「请选择模型文件」，<code>📁 选择</code> 选 <code>.pt</code>（默认空，必须自己选）</td></tr>
+<tr><td>导出格式:</td><td>下拉，顺序为 <code>onnx</code>、<code>torchscript</code>、<code>tflite</code>、<code>tensorrt</code>、<code>openvino</code>、<code>coreml</code>、<code>engine</code>、<code>pt</code>；默认 <code>onnx</code></td></tr>
+<tr><td>输出目录:</td><td><code>runs/export</code>，<code>📁 选择</code></td></tr>
+<tr><td>图像尺寸 / 设备</td><td><code>640</code>（32~4096）/ <code>cpu</code>（要与训练时一致，否则动态输入尺寸不匹配）</td></tr>
+</table>
+<p><b>操作：</b>选模型 → 选格式 → 确认输出目录与 imgsz → <code>🚀 开始导出</code>（期间该按钮禁用，可 <code>⏹️ 停止导出</code>）→ 看「📋 导出日志」。成功后日志会写「模型导出成功！」和「导出文件: …」。</p>
+<p><b>产物位置：</b><code>输出目录/模型文件名_格式/</code>，例如 <code>runs/export/best_onnx/best.onnx</code>。同名目录会被覆盖。</p>
+<table>
+<tr><th>格式</th><th>适用场景（页面内「📋 格式说明」原文）</th></tr>
+<tr><td>ONNX</td><td>开放神经网络交换格式，适用于跨平台部署</td></tr>
+<tr><td>TorchScript</td><td>PyTorch脚本格式，适合PyTorch环境部署</td></tr>
+<tr><td>TensorFlow Lite</td><td>适用于移动端和嵌入式设备</td></tr>
+<tr><td>TensorRT</td><td>NVIDIA高性能推理引擎</td></tr>
+<tr><td>OpenVINO</td><td>Intel推理优化工具包</td></tr>
+<tr><td>Core ML</td><td>Apple设备专用格式</td></tr>
+<tr><td>Engine</td><td>TensorRT Engine格式，已优化的推理引擎</td></tr>
+<tr><td>PT</td><td>PyTorch标准格式</td></tr>
+</table>
+<div class="warn">只有 <code>onnx</code> 与 <code>torchscript</code>、<code>pt</code> 开箱即用。<code>tensorrt</code>/<code>engine</code> 需要 NVIDIA GPU 与 TensorRT 库（设备填 <code>cpu</code> 会失败）；<code>tflite</code>、<code>openvino</code>、<code>coreml</code> 需要对应 SDK（CoreML 只能在 macOS 导出）。导出失败时日志会打印详细错误堆栈，按提示补装依赖即可。界面只提供 <code>imgsz</code> 与 <code>device</code> 两个导出参数，如需 <code>half</code>/<code>simplify</code>/<code>opset</code>/<code>dynamic</code> 等高级选项，请用命令行 <code>yolo export</code>。</div>
+
+<h2 id="s11">11. 结果预览（📈）</h2>
+<p>页面说明：「查看训练实验结果，对比不同训练配置的效果」。顶部填「项目目录」（默认 <code>runs/train</code>）+ <code>📁 浏览</code> + <code>🔄 刷新</code>，左侧是实验列表，右侧三个标签页。</p>
+<h3>11.1 选择实验</h3>
+<ul>
+<li>「📋 实验列表」只收录<b>含 <code>args.yaml</code></b> 的子目录，按修改时间倒序，每项带复选框。</li>
+<li>勾选方式：点复选框；<code>Ctrl+点击</code> 或框选可多选（框选 ≥2 行会自动全部勾选）；<code>☑ 全选</code> / <code>☐ 清空勾选</code>。</li>
+<li>标签「已勾选 N 个」实时反映数量；<code>📊 对比勾选实验</code> 按钮文字会带上 <code>(N)</code>。</li>
+</ul>
+<h3>11.2 三个标签页</h3>
+<table>
+<tr><th>标签页</th><th>能做什么</th></tr>
+<tr><td>⚙️ 配置信息</td><td>显示当前实验 <code>args.yaml</code> 原文，用于核对某次训练到底用了什么参数。文件缺失显示「配置文件不存在」</td></tr>
+<tr><td>📈 结果图表</td><td>下拉选择实验目录里任意 PNG/JPG（首项为「选择图表」），如 <code>results.png</code>、混淆矩阵、PR 曲线，在画布预览</td></tr>
+<tr><td>🔍 曲线对比</td><td>「选择对比指标:」下拉切换指标后自动重绘多实验曲线；勾选「自动保存对比图到本地（每次生成对比图时自动保存）」则每次生成都会落盘到 <code>保存路径:</code>（默认 <code>compare_results</code>）；<code>💾 另存为图片</code>（生成过对比图后启用）；<code>📦 批量保存全部对比图</code> 一次性输出 <code>box_loss</code>、<code>val/box_loss</code>、<code>metrics/mAP50(B)</code>、<code>metrics/precision(B)</code> 四张图，完成弹「批量保存完成」说明成功数与位置</td></tr>
+</table>
+<p>可对比的 10 个指标（下拉顺序）：<code>box_loss</code>、<code>cls_loss</code>、<code>dfl_loss</code>、<code>val/box_loss</code>、<code>val/cls_loss</code>、<code>val/dfl_loss</code>、<code>metrics/precision(B)</code>、<code>metrics/recall(B)</code>、<code>metrics/mAP50(B)</code>、<code>metrics/mAP50-95(B)</code>。曲线以轮数(Epoch)为横轴，各实验一种颜色。</p>
+<div class="warn">对比至少要勾选 2 个实验，否则提示「请至少勾选两个实验进行对比」；缺 <code>results.csv</code> 或列名不匹配的实验会被静默跳过。本页没有日志区，运行反馈直接体现在图表与弹窗上。</div>
+<div class="tip">选模型的常用判断：<code>metrics/mAP50-95(B)</code> 最高者通常最优；训练损失持续下降但验证损失抬头说明过拟合，可缩短 <code>epochs</code> 或加强增强。</div>
+
+<h2 id="s12">12. 目录结构与配置文件</h2>
+<pre><code>yolo_tool/
+├── main.py                 # 程序入口：python main.py
+├── README.md               # 本说明的 Markdown 版
+├── assets/                 # 关于系统资源（二维码 qrcode.jpg、本帮助 help.html）
+├── pages/                  # 9 个功能页面
+├── workers/                # 后台线程（训练、导出、通用任务）
+├── utils/                  # theme.py 统一主题、preview.py 图片显示
+├── configs/
+│   ├── sam_settings.json   # SAM 图像/视频参数（由 ⚙️ SAM设置 写入）
+│   └── train_configs/      # 💾 保存配置 生成的训练参数 YAML
+├── weights/                # YOLO 预训练权重（yolo11n/yolo26n/yolov8n ...）
+├── sam/                    # SAM2 权重（sam2_s.pt / sam2_b.pt）
+├── datasets/
+│   └── coco8/              # 官方示例数据集，含 coco8.yaml
+├── runs/
+│   ├── train/              # 训练输出（project 默认值）
+│   ├── detect/             # 图片推理输出
+│   └── export/             # 模型导出输出
+├── ultralytics/            # 可选：本地 ultralytics 源码与 cfg
+└── temp/                   # 图表/预览临时文件，可随时清空
+</code></pre>
+<p><b>需要你手工准备的只有两样：</b>数据集 <code>data.yaml</code>（格式见 7.1）和标注用的 <code>classes.txt</code>（由类别管理自动生成）。其余目录软件会自动创建。</p>
+<p><b>YOLO 标签格式（全软件统一）：</b>每行一个目标，<code>class_id cx cy w h</code>，五个值以空格分隔；后四个为相对图片宽高的归一化值（0~1），保存 6 位小数。分割标注会有更多列（多边形顶点），本工具统计/推理统一读取第 4、5 列作为宽高。</p>
+
+<h2 id="s13">13. 常见问题 FAQ</h2>
+
+<h3>Q1 点「开始训练/推理」立刻报 CUDA 或 device 相关错误</h3>
+<p>「设备」默认是 <code>0</code>（GPU 0）。没有 NVIDIA 显卡时必须手动改成 <code>cpu</code>；有显卡但驱动低于 CUDA 12.1，需在环境配置里改装 CPU 版 PyTorch 或自行安装匹配版本。</p>
+
+<h3>Q2 环境配置完成但训练仍提示找不到 ultralytics</h3>
+<p>依赖装在新 conda 环境里，而程序仍跑在旧解释器上。请按完成弹窗的三步：打开 Anaconda Prompt → <code>conda activate yolo_env</code> → 在该环境中重新运行 <code>python main.py</code>。</p>
+
+<h3>Q3 类别名称显示成「类别 0」而不是真实名称</h3>
+<p>标签统计页未选择「数据集YAML」，或 YAML 里没有 <code>names</code>。填了 <code>classes.txt</code> 时，请确保行序即 ID 序（第 1 行 = 0）。</p>
+
+<h3>Q4 AI 预标注出来的类别对不上</h3>
+<p>模型内置类别顺序与你的 <code>classes.txt</code> 不一致。二选一：先让 classes.txt 与模型顺序对齐；或勾选「跳过类别校验」，让软件用模型输出的类别名回写 classes.txt（会改动文件，弹窗会二次确认）。</p>
+
+<h3>Q5 SAM 点了没反应</h3>
+<p>模型正在后台加载，提示为「SAM模型尚未加载完成，加载后请重新点击目标」。等待数秒后重新点击；若下拉里没有任何 SAM 模型，把 <code>sam2_*.pt</code> 放进 <code>sam/</code> 或 <code>weights/</code>。</p>
+
+<h3>Q6 视频追踪目标频繁「已丢失」</h3>
+<p>连续 15 帧匹配不上即判丢失。打开 <code>⚙️ SAM设置</code>，把质量预设改为「快速运动」（放宽面积与位移限制）或「自定义」调小 <code>最小前后IoU</code>、放大 <code>最大中心距离比</code>；目标被遮挡时暂停后用 <code>🎯 重新框选选中目标(需暂停)</code> 补框。</p>
+
+<h3>Q7 训练目标太小、召回低</h3>
+<p>先看「标签统计」的宽/高 P5 分布：若归一化宽高普遍小于 0.05，把训练 <code>imgsz</code> 提到 960/1280 并相应调小 <code>batch</code>。</p>
+
+<h3>Q8 结果预览里看不到实验或没有图</h3>
+<p>实验目录必须有 <code>args.yaml</code> 才会进列表；图表来自训练时勾选「绘制图表」(<code>plot</code>) 生成的 PNG。若换了 <code>project</code> 目录，记得在顶部同步修改「项目目录」并点 <code>🔄 刷新</code>。</p>
+
+<h3>Q9 中文/图表显示为方块</h3>
+<p>绘图依赖系统中文字体（依次尝试 Microsoft YaHei、SimHei、SimSun）。Windows 一般自带；缺失时安装任一中文字体即可。</p>
+
+
+<hr>
+<p style="color:#64748b;font-size:13px;margin-top:26px">© YOLO深度学习 出品 ｜ 微信公众号：YOLO深度学习 ｜ 本说明位于 <code>assets/help.html</code>，可离线查看。</p>
+</div>
+</div>
+<script>
+// 滚动时高亮左侧目录当前章节
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.menu a'));
+  var targets = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  function sync() {
+    var y = window.scrollY + 90, cur = 0;
+    for (var i = 0; i < targets.length; i++) { if (targets[i] && targets[i].offsetTop <= y) cur = i; }
+    links.forEach(function (a, i) { a.className = i === cur ? 'active' : ''; });
+  }
+  window.addEventListener('scroll', sync, { passive: true });
+  sync();
+})();
+</script>
+</body>
+</html>

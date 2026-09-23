@@ -1,0 +1,18 @@
+{
+  "sam": {
+    "image": {
+      "imgsz": 1024
+    },
+    "video": {
+      "imgsz": 1024,
+      "preset": "均衡",
+      "quality": {
+        "min_area_ratio": 0.02,
+        "max_area_ratio": 1.25,
+        "min_previous_iou": 0.6,
+        "max_center_distance_ratio": 1.5,
+        "max_frame_area_ratio": 0.85
+      }
+    }
+  }
+}

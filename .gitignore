@@ -1,0 +1,13 @@
+*.yaml
+data/
+runs/
+__pycache__/
+*.pt
+*.pyc
+build/
+dist/
+*.cache
+*.exe
+*.spec
+*resluts
+.vscode/
