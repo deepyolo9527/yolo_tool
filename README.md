@@ -164,7 +164,10 @@
 ---
 
 ## 5. SAM视频追踪 🎬
-<img width="2555" height="1438" alt="视频推理" src="https://github.com/user-attachments/assets/13d65352-bd4f-4c49-8604-ca421f1e735b" />
+
+
+https://github.com/user-attachments/assets/69e1f22e-cbf1-4eaf-b2be-9570ffe501c9
+
 页面说明：「首帧画框一次，SAM2 逐帧自动追踪，按帧导出图片与 YOLO 标签」。适合把一段视频快速变成几千张带标注的训练图。
 
 ### 5.1 控件
@@ -349,7 +352,7 @@ runs/train/exp/
 ---
 
 ## 9. 视频推理 🎬
-
+<img width="2555" height="1438" alt="视频推理" src="https://github.com/user-attachments/assets/13d65352-bd4f-4c49-8604-ca421f1e735b" />
 页面说明：「使用训练好的YOLO模型对视频进行目标检测」。与图片推理同构，差异：
 
 - `视频文件:` 占位「请选择视频文件」，**单选**，支持 `mp4/avi/mov/mkv`。
