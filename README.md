@@ -1,10 +1,6 @@
-<img width="2555" height="1375" alt="一键环境配置" src="https://github.com/user-attachments/assets/c24f9d15-fccd-4ce6-9a0d-82480bfa8ba9" />
 # 🤖 YOLO AI 训练系统
 
 基于 PyQt5 的图形化 YOLO 工具箱，把 **配环境 → 标数据 → 看分布 → 训练 → 验证 → 推理 → 导出** 整条流程集中在一个窗口里完成，不需要手写命令行。
-<img width="2546" height="1364" alt="数据标注" src="https://github.com/user-attachments/assets/c8ede744-d79f-47fd-948e-4a5b4780c8f5" />
-
-> 本文是完整操作说明。软件内点击顶部 **`ℹ️ 关于系统`** 可随时打开同一份帮助（离线渲染，也可用浏览器打开 `assets/help.html`）。
 
 ---
 
@@ -110,8 +106,6 @@
 
 ## 4. 数据标注 ✏️
 <img width="2546" height="1364" alt="数据标注" src="https://github.com/user-attachments/assets/7634d3f2-8072-4994-875d-f761e19f771b" />
-<img width="2555" height="1438" alt="视频推理" src="https://github.com/user-attachments/assets/6aea90e4-040e-45eb-85b8-484d240d5295" />
-
 页面说明：「手动框标注 / SAM 图片分割 / AI 预标注，支持类别管理与标注统计」。中间是图片画布，右侧一列功能卡片。
 
 ### 4.1 控件
