@@ -11,6 +11,7 @@ from utils import theme
 from utils.preview import PreviewLabel
 from utils.path_helpers import get_app_dir, get_weights_dir
 from workers.inference_worker import VideoInferenceWorker
+import cv2
 import os
 import sys
 
@@ -52,9 +53,11 @@ class VideoInferencePage(BasePage):
             0, 0, 1, 3)
 
         self.video_edit = QLineEdit()
+        self.video_edit.editingFinished.connect(self._preview_source)
         grid.addWidget(theme.field("视频文件:", theme.path_row(
             self.video_edit, "请选择视频文件",
-            lambda: self._select_file(self.video_edit, "视频文件 (*.mp4 *.avi *.mov *.mkv)"),
+            lambda: self._select_file(self.video_edit, "视频文件 (*.mp4 *.avi *.mov *.mkv)",
+                                      self._preview_source),
             "🎬")),
             0, 3, 1, 3)
 
@@ -150,7 +153,7 @@ class VideoInferencePage(BasePage):
         left_title = QLabel("原始画面")
         theme.set_role(left_title, "hint")
         left.addWidget(left_title)
-        self.orig_view = PreviewLabel("尚未推理，原始视频帧将显示在此处")
+        self.orig_view = PreviewLabel("选择视频后在此预览首帧")
         left.addWidget(self.orig_view, 1)
         views.addLayout(left, 1)
 
@@ -176,6 +179,19 @@ class VideoInferencePage(BasePage):
         return card
 
     # ---------- 实时预览 ----------
+    def _preview_source(self):
+        """选定视频后立刻读取首帧显示，不必等到点击开始推理"""
+        path = self.video_edit.text().strip()
+        if not path or not os.path.isfile(path):
+            return
+        cap = cv2.VideoCapture(path)
+        try:
+            ok, frame = cap.read() if cap.isOpened() else (False, None)
+        finally:
+            cap.release()
+        if ok:
+            self.orig_view.set_frame(frame)
+
     def _on_preview(self, orig_bgr, ann_bgr):
         self.orig_view.set_frame(orig_bgr)
         self.result_view.set_frame(ann_bgr)
@@ -191,10 +207,12 @@ class VideoInferencePage(BasePage):
             QMessageBox.information(self, "提示", "输出视频尚未生成")
 
     # ---------- 文件选择 ----------
-    def _select_file(self, line_edit, filter_str):
+    def _select_file(self, line_edit, filter_str, on_picked=None):
         file_path = QFileDialog.getOpenFileName(self, "选择文件", "", filter_str)[0]
         if file_path:
             line_edit.setText(file_path)
+            if on_picked:
+                on_picked()
 
     def browse_output_dir(self):
         dir_path = QFileDialog.getExistingDirectory(self, "选择输出目录")

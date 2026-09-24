@@ -241,6 +241,12 @@ class TrainingPage(BasePage):
             setattr(self, key, cb)
             grid.addWidget(cb, index // 6, index % 6)
 
+        self.workers_spin = self._ispin(
+            0, "workers：数据加载子进程数。打包版(exe)请保持 0，"
+               "否则每个子进程都要重新解压程序，既慢又占内存；源码运行时可调 4~8 提速",
+            0, 32)
+        grid.addWidget(theme.field("数据加载线程数:", self.workers_spin), 3, 0, 1, 3)
+
         card_layout.addLayout(grid)
         return card
 
@@ -284,6 +290,8 @@ class TrainingPage(BasePage):
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
         self.log_text.setMinimumHeight(200)
+        # 训练是完整透传终端输出的，不设上限跑几百轮后文本框会吃掉大量内存
+        self.log_text.document().setMaximumBlockCount(5000)
         theme.set_role(self.log_text, "log")
         card_layout.addWidget(self.log_text)
         return card
@@ -307,7 +315,7 @@ class TrainingPage(BasePage):
     ]
     _INT_SPIN_FIELDS = [
         'epochs', 'batch_size', 'imgsz', 'patience', 'save_period',
-        'seed', 'close_mosaic', 'max_det',
+        'seed', 'close_mosaic', 'max_det', 'workers_spin',
     ]
     _DOUBLE_SPIN_FIELDS = [
         'lr0', 'lrf', 'momentum',
@@ -321,7 +329,7 @@ class TrainingPage(BasePage):
         'show_labels', 'show_conf', 'plot', 'val', 'visualize', 'verbose',
     ]
     # batch_size / save_period 在 YAML 中使用 batch / save_period 键名以兼容 ultralytics 默认配置
-    _SPIN_KEY_ALIAS = {'batch_size': 'batch'}
+    _SPIN_KEY_ALIAS = {'batch_size': 'batch', 'workers_spin': 'workers'}
 
     def _collect_all_params(self):
         """收集所有训练参数和路径，返回字典（可用于保存或直接训练）"""
@@ -465,6 +473,7 @@ class TrainingPage(BasePage):
             'data': data_yaml,
             'epochs': self.epochs.value(),
             'batch': self.batch_size.value(),
+            'workers': self.workers_spin.value(),
             'imgsz': self.imgsz.value(),
             'device': self.device.text(),
             'patience': self.patience.value(),

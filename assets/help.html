@@ -70,12 +70,12 @@
 <tr><td>左侧导航栏</td><td>「⚙️ 环境配置」独立置顶，其余归为三个可折叠分组：<b>🗂️ 数据处理</b>（✏️ 数据标注 / 🎬 SAM视频追踪 / 📊 标签统计）、<b>🔥 YOLO训练</b>（🚀 模型训练 / 📦 模型导出）、<b>⚡ YOLO推理</b>（🖼️ 图片推理 / 🎬 视频推理 / 📈 结果预览）。点击分组标题（▸/▾）展开或收起，点击页面项会自动展开其所属分组</td></tr>
 <tr><td>右侧内容区</td><td>当前页面的工作区，纵向可滚动。每个页面都由若干白色卡片分区：<b>参数配置卡 → 执行按钮卡 → 结果/图表卡 → 📋 日志卡</b></td></tr>
 </table>
-<div class="tip">鼠标悬停在导航项上会显示该模块的功能提示；把窗口拉宽或拉窄时界面字号与间距会自动缩放，图表也会跟随画布自适应。</div>
+<div class="tip">鼠标悬停在导航项上会显示该模块的功能提示；把窗口拉宽或拉窄时界面字号与间距会自动缩放；图表画布默认按图片原始尺寸显示（放不下才等比缩小，绝不放大），双击画布可在「固定尺寸」与「放大」之间切换。</div>
 
 <h3>1.2 九个模块一览</h3>
 <table>
 <tr><th>模块</th><th>解决什么问题</th><th>产出物</th></tr>
-<tr><td>⚙️ 环境配置</td><td>自动安装 Miniconda、创建虚拟环境、装齐 ultralytics/PyTorch 等依赖</td><td>一个可直接跑训练/推理的 conda 环境</td></tr>
+<tr><td>⚙️ 环境配置</td><td>自动安装 Miniconda、创建虚拟环境、装齐 ultralytics/PyTorch 等依赖；「🖥️ 系统硬件」分区实时显示 CPU/内存/显卡占用与 GPU 可用性</td><td>一个可直接跑训练/推理的 conda 环境</td></tr>
 <tr><td>✏️ 数据标注</td><td>画矩形框、SAM 点击/框选分割、AI 模型批量预标注</td><td>YOLO 格式 <code>图片名.txt</code> + <code>classes.txt</code></td></tr>
 <tr><td>🎬 SAM视频追踪</td><td>视频首帧框一次，SAM2 逐帧自动分割，免逐帧手标</td><td>逐帧图片 + 逐帧 YOLO 标签 + <code>session.json</code></td></tr>
 <tr><td>📊 标签统计</td><td>看类别是否均衡、目标大小与宽高比是否适配 <code>imgsz</code></td><td>统计表 + 5 类可视化图表 PNG</td></tr>
@@ -89,7 +89,7 @@
 <h2 id="s2">2. 快速上手路线</h2>
 <p>第一次使用，按下面顺序走一遍即可跑通全流程：</p>
 <ol>
-<li><b>配环境</b>：打开「⚙️ 环境配置」→ 保持默认环境名 <code>yolo_env</code>、Python <code>3.10</code> → 有 NVIDIA 显卡时勾选「使用GPU训练」→ 点 <code>⚙️ 一键配置环境</code>。弹窗提示完成后，按提示在 Anaconda Prompt 里 <code>conda activate yolo_env</code> 并<b>重新启动本程序</b>。</li>
+<li><b>配环境</b>：打开「⚙️ 环境配置」→ 先看「🖥️ 系统硬件」的显卡行（红字提示「当前环境 GPU 不可用」就说明用不了 GPU）→ 保持默认环境名 <code>yolo_env</code>、Python <code>3.10</code> → 有 NVIDIA 显卡时勾选「使用GPU训练」→ 点 <code>⚙️ 一键配置环境</code>。弹窗提示完成后，按提示在 Anaconda Prompt 里 <code>conda activate yolo_env</code> 并<b>重新启动本程序</b>。</li>
 <li><b>准备数据</b>：图片放一个文件夹。「✏️ 数据标注」→ <code>📁 打开图片文件夹</code> → <code>📂 打开标签文件夹</code>（没有就先新建一个空文件夹）→ 在「🏷️ 类别与模型」里 <code>🏷️ 标注类别管理</code> 添加类别。然后 <b>W 画框</b> 或 <code>🤖 AI预标注</code> 快速起步。</li>
 <li><b>查分布</b>：「📊 标签统计」选择标签目录（可带数据集 YAML）→ <code>🚀 开始统计</code>，确认类别均衡度与目标宽高比。</li>
 <li><b>建数据集配置</b>：手写 <code>data.yaml</code>（见 <a href="#s7">第 7 节</a>），放到 <code>datasets/你的数据集/</code>。</li>
@@ -113,10 +113,25 @@
 </table>
 <p>自动检测顺序：环境变量 <code>%CONDA_EXE%</code> → 依次在 <code>%USERPROFILE%</code>、<code>C:\</code>、<code>D:\</code>、<code>E:\</code>、<code>F:\</code> 下查找 <code>miniconda3/anaconda3\Scripts\conda.exe</code> → 最后查 <code>PATH</code>。本机的 conda 若装在 <code>E:\ProgramData\miniconda3</code> 这类位置，也能被扫描到；扫描不到时把 conda.exe 完整路径填进「Conda路径」即可。</p>
 
-<h3>3.2 操作步骤</h3>
+<h3>3.2 系统硬件分区</h3>
+<p>参数卡下方的「🖥️ 系统硬件」卡片会实时体检本机配置，页面可见时每 3 秒自动刷新一次（采集在后台线程完成，界面不卡顿）：</p>
+<table>
+<tr><th>行</th><th>显示内容</th><th>进度条</th></tr>
+<tr><td>CPU</td><td>型号 · 核数/线程数，副行显示当前主频</td><td>CPU 总占用率</td></tr>
+<tr><td>内存</td><td>已用 / 总量 GB，并给出可用量</td><td>内存占用率</td></tr>
+<tr><td>显卡</td><td>显卡型号 · 驱动版本，副行显示核心利用率与显存 已用/总量</td><td>GPU 利用率</td></tr>
+</table>
+<p>GPU 检测先用 <code>nvidia-smi</code> 拿到显卡与驱动信息，再用 <code>torch.cuda.is_available()</code> 判断当前 PyTorch 能否真正用上这张卡，因此能区分两种「GPU 不可用」：</p>
+<ul>
+<li>机器上没有 NVIDIA 显卡 → 显卡行显示「未检测到 NVIDIA 显卡」，红字提示「当前环境 GPU 不可用，训练与推理将使用 CPU 运行」。</li>
+<li>有显卡但装的是 CPU 版 PyTorch → 红字提示「已检测到显卡，但当前 PyTorch 不支持 GPU…安装 CUDA 版 PyTorch 后即可启用」，此时只需重装 CUDA 版 torch，不必动驱动。</li>
+</ul>
+<p>GPU 不可用时不显示进度条（空条会被误读成「占用 0%」）；未安装 <code>psutil</code> 时 CPU/内存两行降级为「无法读取占用」，其余功能不受影响。</p>
+
+<h3>3.3 操作步骤</h3>
 <ol>
 <li>填写/确认上面四项参数，点 <code>⚙️ 一键配置环境</code>。</li>
-<li>观察「📊 安装进度」进度条与「📋 配置日志」。执行顺序固定为：检测 Conda（10%）→ 没有则下载安装 Miniconda（30%）→ <code>conda create -n 环境名 python=版本 pip -y</code>（40%）→ 依次安装 <code>ultralytics</code>、<code>pyqt5</code>、<code>opencv-python</code>、<code>pyyaml</code>（60/70/80/90%）→ 安装 <code>torch torchvision</code>（GPU 走 cu121 官方源，失败自动降级 CPU 版）→ 100%。</li>
+<li>观察「📊 安装进度」进度条与「📋 配置日志」（日志框最小 160 px，窗口拉高时随之伸展，全屏不会出现大片留白）。执行顺序固定为：检测 Conda（10%）→ 没有则下载安装 Miniconda（30%）→ <code>conda create -n 环境名 python=版本 pip -y</code>（40%）→ 依次安装 <code>ultralytics</code>、<code>pyqt5</code>、<code>opencv-python</code>、<code>pyyaml</code>、<code>psutil</code>（进度按包数均分推进）→ 安装 <code>torch torchvision</code>（GPU 走 cu121 官方源，失败自动降级 CPU 版）→ 100%。</li>
 <li>全部下载走清华 PyPI 镜像（<code>https://pypi.tuna.tsinghua.edu.cn/simple</code>），国内网络较快。</li>
 <li>完成后弹窗给出三条后续操作：① <code>conda activate 环境名</code>；② 该环境 Python 解释器的绝对路径；③ <b>在激活后的环境中重新启动本程序</b>，训练/推理才会用到新装的依赖。</li>
 </ol>
@@ -215,8 +230,8 @@
 <tr><th>卡片</th><th>内容</th></tr>
 <tr><td>输入</td><td><code>标签目录:</code>（占位「请选择标签目录」）+ <code>📁 浏览</code>；<code>数据集YAML:</code>（占位「可选：数据集YAML文件」）+ <code>📄 选择</code>，用于把类别 ID 映射成名称；按钮 <code>🚀 开始统计</code></td></tr>
 <tr><td>📈 类别数量统计</td><td>表格：类别ID、类别名称、各分割列（训练集/验证集/测试集）、总数</td></tr>
-<tr><td>📐 宽高比与尺寸分布</td><td>整体摘要（总框数、宽/高、宽高比、形态分布、面积分布）+ 8 列表格：类别ID、类别名称、数量、<code>宽 均值/中位/P5~P95</code>、<code>高 均值/中位/P5~P95</code>、<code>宽高比 均值/中位/P5~P95</code>、宽范围、高范围</td></tr>
-<tr><td>🖼️ 可视化图表</td><td><code>数据范围:</code>（全部数据 + 各分割）；<code>图表类型:</code> 5 种；<code>💾 保存图表</code>；画布自动随窗口缩放</td></tr>
+<tr><td>📐 宽高比与尺寸分布</td><td>整体摘要（总框数、宽/高、宽高比、形态分布、面积分布）+ 8 列表格：类别ID、类别名称、数量、宽 W、高 H、宽高比 W/H、宽范围、高范围。三个数值列每格两行：上行 <code>均值 / 中位数</code>，下行 <code>P5~P95</code>（中间 90% 的目标框所在区间）；范围列为最小~最大值</td></tr>
+<tr><td>🖼️ 可视化图表</td><td><code>数据范围:</code>（全部数据 + 各分割）；<code>图表类型:</code> 5 种；<code>💾 保存图表</code>；画布固定尺寸显示，双击可放大到原始像素并滚动查看</td></tr>
 <tr><td>📋 操作日志</td><td>统计与保存过程的文字记录</td></tr>
 </table>
 
@@ -264,6 +279,7 @@ names:                     # 顺序必须与 classes.txt 一致，ID 从 0 开�
 <tr><th>界面项</th><th>键 / 默认</th><th>怎么调</th></tr>
 <tr><td>训练轮数</td><td><code>epochs</code> = 100（1~10000）</td><td>小数据集 100~300；先用 50 轮试跑通</td></tr>
 <tr><td>批次大小</td><td><code>batch</code> = 16</td><td>显存不够就调小（8/4/2），或设 -1 自动</td></tr>
+<tr><td>数据加载线程数</td><td><code>workers</code> = 0（0~32）</td><td><b>打包版(exe)请保持 0</b>，否则每个子进程都要重新解压程序，既慢又占内存；源码运行时数据量大可调 4~8 提速</td></tr>
 <tr><td>图像尺寸</td><td><code>imgsz</code> = 640（32~4096）</td><td>目标很小（标签统计里宽/高 P95 &lt; 0.05）时提高到 960/1280</td></tr>
 <tr><td>设备</td><td><code>device</code> = <code>0</code></td><td>单张显卡填 0，多卡填 0,1；<b>无 GPU 必须改成 <code>cpu</code></b>，否则启动即报错</td></tr>
 <tr><td>优化器</td><td><code>optimizer</code> = SGD（列表顺序 SGD / Adam / AdamW / NAdam）</td><td>小数据集常换 AdamW 并把 lr0 降到 0.001</td></tr>
@@ -295,7 +311,7 @@ names:                     # 顺序必须与 classes.txt 一致，ID 从 0 开�
 
 <h3>7.5 运行、停止与配置复用</h3>
 <ol>
-<li>点 <code>🚀 开始训练</code> → 后台线程启动训练，界面不卡死，「📋 训练日志」以等宽字体实时滚动输出；结束时写入 <code>[完成] …</code> 或 <code>[错误] …</code>。</li>
+<li>点 <code>🚀 开始训练</code> → 后台线程启动训练，界面不卡死。训练前先在「📋 训练日志」打印 Python / PyTorch / ultralytics 版本与全部训练参数，随后<b>完整透传终端输出</b>：模型结构表、逐轮进度条、验证指标、各类警告都会以等宽字体实时滚动；进度条的 <code>\r</code> 原地刷新只保留最终一帧，不会刷成上千行（终端颜色码在写入前剔除；日志框保留最近 5000 行，更早的内容自动丢弃）。结束时写入 <code>[完成] …</code> 或 <code>[错误] …</code>。</li>
 <li>运行中再点开始会提示「任务正在运行中」；数据集配置路径无效会提示「请选择有效的数据集配置文件」。</li>
 <li>点 <code>⏹️ 停止训练</code>（初始禁用，运行后可用）会请求 ultralytics 优雅停止当前 epoch，日志提示「正在停止训练...」。</li>
 <li><code>💾 保存配置</code>：把当前<b>全部</b>参数与路径存成 YAML，默认目录 <code>configs/train_configs/</code>（自动创建），默认文件名 <code>train_config_年月日_时分秒.yaml</code>，内含 <code>__saved_at__</code> 时间戳。保存成功弹窗会说明「下次可通过「导入配置」一键载入」。</li>
@@ -315,21 +331,21 @@ names:                     # 顺序必须与 classes.txt 一致，ID 从 0 开�
 <table>
 <tr><th>界面项</th><th>说明 / 默认</th></tr>
 <tr><td>模型路径:</td><td><code>weights/yolo26n.pt</code>，<code>📁</code> 选 <code>.pt</code>（推理自己的模型时填 <code>runs/train/exp/weights/best.pt</code>）</td></tr>
-<tr><td>图片/目录:</td><td>占位「请选择图片文件或目录」，按钮 <code>🖼️</code> 可<b>多选</b>文件（用 <code>;</code> 拼接）或直接选目录</td></tr>
+<tr><td>图片/目录:</td><td>占位「请选择图片文件或目录」，按钮 <code>🖼️</code> 可<b>多选</b>文件（用 <code>;</code> 拼接）或直接选目录。<b>选定后左侧「原图」立刻显示预览</b>（多张取第一张，目录取按名排序的第一张），不必等开始推理；手动输入路径后回车或移开焦点同样刷新</td></tr>
 <tr><td>输出目录:</td><td>默认 <code>runs/detect</code></td></tr>
 <tr><td>置信度 / IoU</td><td><code>0.25</code> / <code>0.7</code>（均 0.01~1.0）</td></tr>
 <tr><td>设备</td><td><code>0</code>（无 GPU 改 <code>cpu</code>）</td></tr>
 <tr><td>类别</td><td>占位「如: 0,1 或 person,car」，留空表示全部类别；先按数字 ID 解析，失败则按类别名</td></tr>
 <tr><td>保存TXT / 保存图像</td><td>保存TXT 默认关；<b>保存图像默认勾选</b></td></tr>
 </table>
-<p><b>操作：</b>填好模型与图片 → <code>🚀 开始推理</code> → 进度条推进 → 在「👁️ 推理可视化」里用 <code>◀</code>/<code>▶</code> 翻看「原图 / 检测结果」左右对比（计数标签显示 <code>当前 / 总数</code>，悬停可看文件名；最多缓存最近 50 组）。日志区在「📋 推理日志」。</p>
+<p><b>操作：</b>填好模型与图片 → <code>🚀 开始推理</code> → 进度条推进 → 在「👁️ 推理可视化」里用 <code>上一张</code>/<code>下一张</code> 翻看「原图 / 检测结果」左右对比（计数标签显示 <code>当前 / 总数</code>，悬停可看文件名；最多缓存最近 50 组）。两栏宽度恒定对半，不受画面像素尺寸影响（只有一栏有图时也不会一宽一窄）。日志区在「📋 推理日志」。</p>
 <p><b>结果位置：</b><code>输出目录/predict/</code> 下与原图同名的标注图；勾选「保存TXT」时同目录输出 YOLO 格式标签。</p>
 <div class="warn">校验提示：「请选择模型文件」「请选择图片文件」「未找到有效的图片文件」「推理任务正在运行中」。推理期间「开始推理」按钮禁用。</div>
 
 <h2 id="s9">9. 视频推理（🎬）</h2>
 <p>页面说明：「使用训练好的YOLO模型对视频进行目标检测」。与图片推理基本同构，差异如下：</p>
 <ul>
-<li><code>视频文件:</code> 占位「请选择视频文件」，<b>单选</b>，支持 <code>mp4/avi/mov/mkv</code>。</li>
+<li><code>视频文件:</code> 占位「请选择视频文件」，<b>单选</b>，支持 <code>mp4/avi/mov/mkv</code>。<b>选定后左侧「原始画面」立刻读取并显示首帧</b>，不必等开始推理。</li>
 <li>多一个 <code>帧间隔:</code>，默认 <b>1</b>（1~30）。设为 N 表示每 N 帧处理一次，可用于长视频提速；同时影响输出速度。</li>
 <li>复选框为 <code>保存TXT</code> 与 <b><code>保存视频</code></b>（默认勾选）。</li>
 <li>运行行有状态标签「当前帧: 0」（运行时递增）和 <code>📂 打开输出视频</code>（初始禁用，输出文件生成后才可点；未生成时提示「输出视频尚未生成」）。</li>
@@ -373,8 +389,8 @@ names:                     # 顺序必须与 classes.txt 一致，ID 从 0 开�
 <table>
 <tr><th>标签页</th><th>能做什么</th></tr>
 <tr><td>⚙️ 配置信息</td><td>显示当前实验 <code>args.yaml</code> 原文，用于核对某次训练到底用了什么参数。文件缺失显示「配置文件不存在」</td></tr>
-<tr><td>📈 结果图表</td><td>下拉选择实验目录里任意 PNG/JPG（首项为「选择图表」），如 <code>results.png</code>、混淆矩阵、PR 曲线，在画布预览</td></tr>
-<tr><td>🔍 曲线对比</td><td>「选择对比指标:」下拉切换指标后自动重绘多实验曲线；勾选「自动保存对比图到本地（每次生成对比图时自动保存）」则每次生成都会落盘到 <code>保存路径:</code>（默认 <code>compare_results</code>）；<code>💾 另存为图片</code>（生成过对比图后启用）；<code>📦 批量保存全部对比图</code> 一次性输出 <code>box_loss</code>、<code>val/box_loss</code>、<code>metrics/mAP50(B)</code>、<code>metrics/precision(B)</code> 四张图，完成弹「批量保存完成」说明成功数与位置</td></tr>
+<tr><td>📈 结果图表</td><td>「图表:」下拉选择实验目录里任意 PNG/JPG（首项为「选择图表」），如 <code>results.png</code>、混淆矩阵、PR 曲线，在画布预览；画布默认按图片原始尺寸显示，双击在「固定尺寸」与「放大」之间切换</td></tr>
+<tr><td>🔍 曲线对比</td><td>「对比指标:」下拉切换指标后自动重绘多实验曲线，画布同样支持双击放大/还原；同行右侧勾选「自动保存对比图到本地」则每次生成都会落盘到 <code>保存路径:</code>（默认 <code>compare_results</code>）；同一行的 <code>💾 另存为图片</code>（生成过对比图后启用）与 <code>📦 批量保存</code> 一次性输出 <code>box_loss</code>、<code>val/box_loss</code>、<code>metrics/mAP50(B)</code>、<code>metrics/precision(B)</code> 四张图，完成弹「批量保存完成」说明成功数与位置</td></tr>
 </table>
 <p>可对比的 10 个指标（下拉顺序）：<code>box_loss</code>、<code>cls_loss</code>、<code>dfl_loss</code>、<code>val/box_loss</code>、<code>val/cls_loss</code>、<code>val/dfl_loss</code>、<code>metrics/precision(B)</code>、<code>metrics/recall(B)</code>、<code>metrics/mAP50(B)</code>、<code>metrics/mAP50-95(B)</code>。曲线以轮数(Epoch)为横轴，各实验一种颜色。</p>
 <div class="warn">对比至少要勾选 2 个实验，否则提示「请至少勾选两个实验进行对比」；缺 <code>results.csv</code> 或列名不匹配的实验会被静默跳过。本页没有日志区，运行反馈直接体现在图表与弹窗上。</div>
@@ -408,7 +424,7 @@ names:                     # 顺序必须与 classes.txt 一致，ID 从 0 开�
 <h2 id="s13">13. 常见问题 FAQ</h2>
 
 <h3>Q1 点「开始训练/推理」立刻报 CUDA 或 device 相关错误</h3>
-<p>「设备」默认是 <code>0</code>（GPU 0）。没有 NVIDIA 显卡时必须手动改成 <code>cpu</code>；有显卡但驱动低于 CUDA 12.1，需在环境配置里改装 CPU 版 PyTorch 或自行安装匹配版本。</p>
+<p>「设备」默认是 <code>0</code>（GPU 0）。没有 NVIDIA 显卡时必须手动改成 <code>cpu</code>；有显卡但驱动低于 CUDA 12.1，需在环境配置里改装 CPU 版 PyTorch 或自行安装匹配版本。不确定本机显卡能否被用上，看「⚙️ 环境配置 → 🖥️ 系统硬件」的显卡行：红字提示「当前环境 GPU 不可用」时，训练/推理都要改成 <code>cpu</code>。</p>
 
 <h3>Q2 环境配置完成但训练仍提示找不到 ultralytics</h3>
 <p>依赖装在新 conda 环境里，而程序仍跑在旧解释器上。请按完成弹窗的三步：打开 Anaconda Prompt → <code>conda activate yolo_env</code> → 在该环境中重新运行 <code>python main.py</code>。</p>
@@ -433,7 +449,6 @@ names:                     # 顺序必须与 classes.txt 一致，ID 从 0 开�
 
 <h3>Q9 中文/图表显示为方块</h3>
 <p>绘图依赖系统中文字体（依次尝试 Microsoft YaHei、SimHei、SimSun）。Windows 一般自带；缺失时安装任一中文字体即可。</p>
-
 
 <hr>
 <p style="color:#64748b;font-size:13px;margin-top:26px">© YOLO深度学习 出品 ｜ 微信公众号：YOLO深度学习 ｜ 本说明位于 <code>assets/help.html</code>，可离线查看。</p>

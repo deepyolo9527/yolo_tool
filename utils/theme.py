@@ -7,6 +7,9 @@
 所有页面共用一份 app 级样式表，字号随主窗口宽度整体缩放。
 """
 
+import os
+import tempfile
+
 from PyQt5.QtWidgets import (QWidget, QLabel, QFrame, QPushButton, QHBoxLayout,
                              QVBoxLayout, QGridLayout, QSizePolicy)
 from PyQt5.QtCore import Qt
@@ -19,6 +22,7 @@ C = {
     "card": "#ffffff",
     "border": "#e2e8f0",
     "border_strong": "#cbd5e1",
+    "border_check": "#94a3b8",
     "text": "#334155",
     "text_strong": "#1e293b",
     "text_muted": "#64748b",
@@ -48,6 +52,34 @@ def _i(v, scale):
     return int(round(v * scale))
 
 
+_CHECK_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">'
+              '<path d="M4.2 9.3L7.4 12.5L13.8 5.6" fill="none" stroke="#ffffff"'
+              ' stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+
+_check_icon_path = None
+
+
+def check_icon():
+    """勾选态对勾图标的文件路径，供 QSS 的 image: url() 使用。
+
+    QSS 的 url() 只认文件路径，不支持 data URI；写成独立资源又要把勾选图标加进
+    build.py 的打包清单，所以落到系统临时目录，每个进程只写一次。
+    写盘失败时返回空串，勾选态退化为实心方块（边框和底色仍能看清）。
+    """
+    global _check_icon_path
+    if _check_icon_path is None:
+        try:
+            d = os.path.join(tempfile.gettempdir(), "yolo_tool_theme")
+            os.makedirs(d, exist_ok=True)
+            path = os.path.join(d, "check_v1.svg")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(_CHECK_SVG)
+            _check_icon_path = path.replace("\\", "/")
+        except OSError:
+            _check_icon_path = ""
+    return _check_icon_path
+
+
 def set_role(widget, role):
     """给组件打角色标签，供全局 QSS 选择"""
     widget.setProperty("tc", role)
@@ -70,6 +102,9 @@ def qss(scale=1.0):
     crad = _i(S["card_radius"], scale)
     trad = _i(S["ctrl_radius"], scale)
     cpad = _i(S["card_pad"], scale)
+    # 对勾图标写盘失败时留空，只靠底色区分勾选态，避免生成 url() 空串这种非法声明
+    _icon = check_icon()
+    check_img = f"image: url({_icon});" if _icon else ""
 
     return f"""
     QWidget {{
@@ -108,6 +143,7 @@ def qss(scale=1.0):
     QLabel[tc="h2"] {{ font-size: {h2}px; font-weight: bold; color: {C['text_strong']}; }}
     QLabel[tc="status"] {{ font-size: {status}px; font-weight: bold; color: {C['text_strong']}; }}
     QLabel[tc="hint"] {{ font-size: {hint}px; color: {C['text_muted']}; }}
+    QLabel[tc="warn"] {{ font-weight: bold; color: {C['danger']}; }}
     QLabel[tc="icon"] {{ font-size: {_i(30, scale)}px; }}
 
     /* ===== 通用输入控件 ===== */
@@ -190,6 +226,43 @@ def qss(scale=1.0):
         border: none; border-bottom: 2px solid {C['border_strong']};
     }}
 
+    /* 统计表格：去掉纵向网格线，靠内边距分隔数字与边框 */
+    QTableWidget[tc="stat"] {{
+        alternate-background-color: {C['bg']};
+    }}
+    QTableWidget[tc="stat"]::item {{
+        padding: {_i(12, scale)}px {_i(14, scale)}px;
+        border-bottom: 1px solid {C['border']};
+    }}
+    QTableWidget[tc="stat"] QHeaderView::section {{
+        padding: {_i(12, scale)}px {_i(14, scale)}px;
+        border-bottom: 2px solid {C['border_strong']};
+    }}
+
+    /* ===== 选项卡 ===== */
+    QTabWidget::pane {{
+        border: none;
+        background-color: {C['card']};
+    }}
+    QTabWidget::tab-bar {{ left: {_i(2, scale)}px; }}
+    QTabBar {{
+        background-color: transparent;
+        qproperty-drawBase: 0;
+    }}
+    QTabBar::tab {{
+        background-color: transparent;
+        color: {C['text_muted']};
+        padding: {_i(9, scale)}px {_i(16, scale)}px;
+        margin-right: {_i(6, scale)}px;
+        border-bottom: 2px solid transparent;
+    }}
+    QTabBar::tab:hover {{ color: {C['text_strong']}; }}
+    QTabBar::tab:selected {{
+        color: {C['primary_pressed']};
+        font-weight: bold;
+        border-bottom: 2px solid {C['primary']};
+    }}
+
     /* ===== 列表 ===== */
     QListWidget {{
         border: 1px solid {C['border']};
@@ -242,14 +315,38 @@ def qss(scale=1.0):
     }}
 
     /* ===== 复选框 ===== */
+    /* 勾选框必须自己画出边框和对勾：QSS 里只给 indicator 设宽高会让它变成空白方块，
+       在白色卡片上完全看不出有勾选框 */
     QCheckBox {{
-        spacing: {_i(7, scale)}px;
+        spacing: {_i(8, scale)}px;
         background-color: transparent;
+        color: {C['text']};
     }}
+    QCheckBox:hover {{ color: {C['text_strong']}; }}
     QCheckBox::indicator {{
-        width: {_i(16, scale)}px;
-        height: {_i(16, scale)}px;
+        width: {_i(18, scale)}px;
+        height: {_i(18, scale)}px;
+        border: 1px solid {C['border_check']};
+        border-radius: {_i(5, scale)}px;
+        background-color: {C['card']};
+        image: none;
     }}
+    QCheckBox::indicator:hover {{
+        border: 1px solid {C['primary']};
+        background-color: {C['primary_soft']};
+    }}
+    QCheckBox::indicator:pressed {{ background-color: {C['primary_softer']}; }}
+    QCheckBox::indicator:checked {{
+        border: 1px solid {C['primary_pressed']};
+        background-color: {C['primary']};
+        {check_img}
+    }}
+    QCheckBox::indicator:checked:hover {{ background-color: {C['primary_hover']}; }}
+    QCheckBox::indicator:disabled {{
+        border: 1px solid {C['border']};
+        background-color: {C['border']};
+    }}
+    QCheckBox:disabled {{ color: {C['text_muted']}; }}
 
     /* ===== 分组框 ===== */
     QGroupBox {{

@@ -4,6 +4,27 @@
 import sys
 import os
 import re
+import io
+
+
+def _ensure_console_streams():
+    """无控制台打包(--windowed)时 sys.stdout/stderr 是 None，必须在建窗之前补上真实流。
+
+    ultralytics 在导入时执行 logging.StreamHandler(sys.stdout)，把当时的 None 永久绑进了
+    handler，之后它每写一条日志都会抛 AttributeError 并打印一整段 '--- Logging error ---'。
+    这里换成丢弃输出的文件对象：界面日志仍由训练线程重定向抓取，互不影响。
+    """
+    for name in ("stdout", "stderr"):
+        if hasattr(getattr(sys, name, None), "write"):
+            continue
+        try:
+            fallback = open(os.devnull, "w", encoding="utf-8", errors="replace")
+        except OSError:
+            fallback = io.StringIO()
+        setattr(sys, name, fallback)
+
+
+_ensure_console_streams()
 
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QLabel,
                              QHBoxLayout, QVBoxLayout, QPushButton, QStackedWidget,
@@ -647,4 +668,9 @@ def main():
 
 
 if __name__ == '__main__':
+    # 打包版里 ultralytics 训练的 DataLoader 用 spawn 启动子进程，子进程会再次执行本入口；
+    # freeze_support() 让子进程只跑数据加载任务，不再弹出 GUI 与残留临时解压目录
+    import multiprocessing
+
+    multiprocessing.freeze_support()
     main()

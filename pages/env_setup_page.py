@@ -2,11 +2,13 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtWidgets import (QLabel, QLineEdit, QPushButton,
-                             QHBoxLayout, QFormLayout, QTextEdit,
-                             QMessageBox, QCheckBox, QProgressBar)
-from PyQt5.QtCore import Qt, QMetaObject, Q_ARG
+                             QHBoxLayout, QVBoxLayout, QFormLayout, QGridLayout,
+                             QTextEdit, QMessageBox, QCheckBox, QProgressBar,
+                             QSizePolicy)
+from PyQt5.QtCore import Qt, QMetaObject, Q_ARG, QTimer
 from pages.base_page import BasePage
 from workers.base_worker import WorkerThread
+from workers.hardware_worker import HardwareWorker
 from utils import theme
 import os
 import re
@@ -19,6 +21,8 @@ class EnvSetupPage(BasePage):
         super().__init__()
         self.target_env = ""
         self.target_prefix = ""
+        self._hw_timer = None
+        self._hw_worker = None
         self.init_ui()
 
     def init_ui(self):
@@ -59,12 +63,17 @@ class EnvSetupPage(BasePage):
 
         layout.addWidget(info_card)
 
+        layout.addWidget(self._build_hardware_card())
+
         status_card, status_layout = theme.card()
         status_layout.addWidget(theme.section("📋 配置日志"))
 
         self.status_text = QTextEdit()
         self.status_text.setReadOnly(True)
-        self.status_text.setMaximumHeight(160)
+        # 用最小高度而不是最大高度：卡片被拉高时多出的空间归日志框，
+        # 否则空间会分给标题标签，全屏时标题被顶到卡片中间、四周全是留白
+        self.status_text.setMinimumHeight(160)
+        self.status_text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         theme.set_role(self.status_text, "log")
         status_layout.addWidget(self.status_text)
         layout.addWidget(status_card)
@@ -95,6 +104,127 @@ class EnvSetupPage(BasePage):
 
         btn_layout.addStretch()
         layout.addLayout(btn_layout)
+
+    # ---------- 系统硬件 ----------
+    _HW_ROWS = (("cpu", "CPU"), ("memory", "内存"), ("gpu", "显卡"))
+
+    def _build_hardware_card(self):
+        card, card_layout = theme.card()
+        card_layout.addLayout(theme.section_row("🖥️", "系统硬件"))
+
+        hint = QLabel("GPU 硬件检测结果与 CPU / 内存 / 显卡实时占用，本页面可见时每 3 秒自动刷新")
+        theme.set_role(hint, "hint")
+        card_layout.addWidget(hint)
+
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(14)
+        grid.setVerticalSpacing(12)
+        grid.setColumnMinimumWidth(0, 52)
+        grid.setColumnStretch(1, 1)
+
+        self._hw_views = {}
+        for row, (key, title) in enumerate(self._HW_ROWS):
+            name_label = QLabel(title)
+            theme.set_role(name_label, "h2")
+            grid.addWidget(name_label, row, 0, Qt.AlignVCenter | Qt.AlignLeft)
+
+            value_label = QLabel("采集中…")
+            value_label.setWordWrap(True)
+            note_label = QLabel()
+            note_label.setWordWrap(True)
+            theme.set_role(note_label, "hint")
+            bar = QProgressBar()
+            bar.setRange(0, 100)
+            bar.setTextVisible(False)
+            percent_label = QLabel("--")
+            theme.set_role(percent_label, "status")
+            percent_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            percent_label.setMinimumWidth(52)
+
+            bar_row = QHBoxLayout()
+            bar_row.setContentsMargins(0, 0, 0, 0)
+            bar_row.setSpacing(10)
+            bar_row.addWidget(bar, 1)
+            bar_row.addWidget(percent_label)
+
+            column = QVBoxLayout()
+            column.setContentsMargins(0, 0, 0, 0)
+            column.setSpacing(4)
+            column.addWidget(value_label)
+            column.addWidget(note_label)
+            column.addLayout(bar_row)
+            grid.addLayout(column, row, 1)
+
+            self._hw_views[key] = (value_label, note_label, bar, percent_label)
+
+        card_layout.addLayout(grid)
+        return card
+
+    def _show_hardware(self, data):
+        if not data:
+            for value, note, bar, percent in self._hw_views.values():
+                self._set_hw_row(value, note, bar, percent, "硬件信息采集失败", "", None, True)
+            return
+
+        cpu = data.get("cpu") or {}
+        value, note, bar, percent = self._hw_views["cpu"]
+        self._set_hw_row(value, note, bar, percent,
+                         " · ".join(x for x in (cpu.get("name"), cpu.get("cores")) if x),
+                         cpu.get("detail", ""), cpu.get("percent"), False)
+
+        mem = data.get("memory") or {}
+        value, note, bar, percent = self._hw_views["memory"]
+        self._set_hw_row(value, note, bar, percent,
+                         mem.get("detail") or "无法读取内存占用", "", mem.get("percent"), False)
+
+        gpu = data.get("gpu") or {}
+        value, note, bar, percent = self._hw_views["gpu"]
+        available = bool(gpu.get("available"))
+        # 没有占用可显示时收起进度条，空着的进度条会被误读成「占用 0%」
+        self._set_hw_row(value, note, bar, percent,
+                         gpu.get("name") or "未检测到显卡", gpu.get("detail", ""),
+                         gpu.get("percent") if available else None,
+                         warn=not available)
+
+    @staticmethod
+    def _set_hw_row(value, note, bar, percent_label, text, note_text, percent, warn):
+        value.setText(text or "--")
+        note.setVisible(bool(note_text))
+        note.setText(note_text)
+        # GPU 不可用是用户最需要看清的一条，整行改用警示色
+        theme.set_role(note, "warn" if warn else "hint")
+        if percent is None:
+            bar.hide()
+            percent_label.hide()
+        else:
+            bar.show()
+            percent_label.show()
+            bar.setValue(int(percent))
+            percent_label.setText(f"{percent:.0f}%")
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._hw_timer is None:
+            self._hw_timer = QTimer(self)
+            self._hw_timer.setInterval(3000)
+            self._hw_timer.timeout.connect(self._probe_hardware)
+        if not self._hw_timer.isActive():
+            self._probe_hardware()
+            self._hw_timer.start()
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        if self._hw_timer is not None:
+            self._hw_timer.stop()
+        if self._hw_worker is not None and self._hw_worker.isRunning():
+            self._hw_worker.wait(1500)
+
+    def _probe_hardware(self):
+        if self._hw_worker is not None and self._hw_worker.isRunning():
+            return
+        self._hw_worker = HardwareWorker(self)
+        self._hw_worker.result_signal.connect(self._show_hardware)
+        self._hw_worker.start()
 
     def log(self, msg):
         QMetaObject.invokeMethod(self.status_text, "append", Qt.QueuedConnection,
@@ -289,10 +419,12 @@ class EnvSetupPage(BasePage):
             'pyqt5',
             'opencv-python',
             'pyyaml',
+            # 系统硬件分区的 CPU/内存占用采集；缺失时界面会降级显示，不影响训练
+            'psutil',
         ]
 
         base_progress = 50
-        progress_step = 10
+        progress_step = 40 // len(dependencies)
 
         for i, dep in enumerate(dependencies):
             if check_stop():

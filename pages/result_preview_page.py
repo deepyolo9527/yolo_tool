@@ -10,6 +10,7 @@ from PyQt5.QtCore import Qt
 from pages.base_page import BasePage
 from utils import theme
 from utils.path_helpers import get_app_dir
+from utils.preview import ChartLabel
 import os
 import numpy as np
 import matplotlib
@@ -92,14 +93,12 @@ class ResultPreviewPage(BasePage):
 
         main_splitter.addWidget(left_card)
 
-        content_card, content_layout = theme.card()
+        content_card, content_layout = theme.card(margin=14, spacing=8)
 
         self.tabs = QTabWidget()
 
         config_tab = QWidget()
-        config_layout = QVBoxLayout(config_tab)
-        config_layout.addLayout(theme.section_row("⚙️", "配置信息"))
-
+        config_layout = self._tab_layout(config_tab)
         self.config_text = QTextEdit()
         self.config_text.setReadOnly(True)
         theme.set_role(self.config_text, "log")
@@ -107,85 +106,69 @@ class ResultPreviewPage(BasePage):
         self.tabs.addTab(config_tab, "⚙️ 配置信息")
 
         chart_tab = QWidget()
-        chart_layout = QVBoxLayout(chart_tab)
-        chart_layout.addLayout(theme.section_row("📈", "结果图表"))
+        chart_layout = self._tab_layout(chart_tab)
 
+        chart_row = QHBoxLayout()
+        chart_row.setSpacing(8)
+        chart_row.addWidget(QLabel("图表:"))
         self.chart_combo = QComboBox()
-        chart_layout.addWidget(self.chart_combo)
+        self.chart_combo.setFixedWidth(260)
+        self.chart_combo.currentIndexChanged.connect(self.on_chart_selected)
+        chart_row.addWidget(self.chart_combo)
+        chart_row.addStretch()
+        chart_row.addWidget(self._zoom_hint())
+        chart_layout.addLayout(chart_row)
 
-        self.chart_label = QLabel("图表预览区域")
-        self.chart_label.setAlignment(Qt.AlignCenter)
-        self.chart_label.setMinimumHeight(360)
-        theme.set_role(self.chart_label, "canvas")
-        chart_layout.addWidget(self.chart_label)
+        self.chart_label = ChartLabel("选择图表后在此预览")
+        chart_layout.addWidget(self.chart_label, 1)
         self.tabs.addTab(chart_tab, "📈 结果图表")
 
         compare_tab = QWidget()
-        compare_layout = QVBoxLayout(compare_tab)
-        compare_layout.addLayout(theme.section_row("🔍", "曲线对比"))
+        compare_layout = self._tab_layout(compare_tab)
 
-        compare_top_layout = QHBoxLayout()
-        compare_top_layout.setSpacing(10)
-
-        metric_label = QLabel("选择对比指标:")
-        compare_top_layout.addWidget(metric_label)
-
+        metric_row = QHBoxLayout()
+        metric_row.setSpacing(8)
+        metric_row.addWidget(QLabel("对比指标:"))
         self.metric_combo = QComboBox()
         self.metric_combo.addItems(['box_loss', 'cls_loss', 'dfl_loss', 'val/box_loss', 'val/cls_loss', 'val/dfl_loss', 'metrics/precision(B)', 'metrics/recall(B)', 'metrics/mAP50(B)', 'metrics/mAP50-95(B)'])
-        self.metric_combo.setMinimumWidth(200)
+        self.metric_combo.setFixedWidth(260)
         self.metric_combo.currentIndexChanged.connect(self.on_metric_change)
-        compare_top_layout.addWidget(self.metric_combo)
-        compare_top_layout.addStretch()
-        compare_layout.addLayout(compare_top_layout)
+        metric_row.addWidget(self.metric_combo)
+        metric_row.addStretch()
+        self.auto_save_checkbox = QCheckBox("自动保存对比图到本地")
+        self.auto_save_checkbox.setToolTip("每次生成对比图时，自动按指标与实验名保存到下方目录")
+        self.auto_save_checkbox.stateChanged.connect(self.on_auto_save_toggled)
+        metric_row.addWidget(self.auto_save_checkbox)
+        metric_row.addWidget(self._zoom_hint())
+        compare_layout.addLayout(metric_row)
 
-        self.compare_label = QLabel("曲线对比预览区域")
-        self.compare_label.setAlignment(Qt.AlignCenter)
-        self.compare_label.setMinimumHeight(360)
-        theme.set_role(self.compare_label, "canvas")
-        compare_layout.addWidget(self.compare_label)
+        self.compare_label = ChartLabel("勾选至少两个实验后生成对比曲线")
+        compare_layout.addWidget(self.compare_label, 1)
 
-        save_frame, save_layout = theme.card(margin=14, spacing=10)
-
-        auto_save_checkbox = QCheckBox("自动保存对比图到本地（每次生成对比图时自动保存）")
-        auto_save_checkbox.stateChanged.connect(self.on_auto_save_toggled)
-        save_layout.addWidget(auto_save_checkbox)
-        self.auto_save_checkbox = auto_save_checkbox
-
-        path_layout = QHBoxLayout()
-        path_layout.setSpacing(8)
-
-        path_label = QLabel("保存路径:")
-        path_layout.addWidget(path_label)
-
+        save_row = QHBoxLayout()
+        save_row.setSpacing(8)
+        save_row.addWidget(QLabel("保存路径:"))
         default_save_dir = os.path.join(project_root, "compare_results")
         self.save_path_edit = QLineEdit(default_save_dir)
-        path_layout.addWidget(self.save_path_edit, 1)
+        save_row.addWidget(self.save_path_edit, 1)
 
         save_browse_btn = QPushButton("📁 选择")
         theme.set_role(save_browse_btn, "primary")
         save_browse_btn.clicked.connect(lambda: self.browse_dir(self.save_path_edit))
-        path_layout.addWidget(save_browse_btn)
-
-        save_layout.addLayout(path_layout)
-
-        btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(10)
+        save_row.addWidget(save_browse_btn)
 
         self.save_btn = QPushButton("💾 另存为图片")
         theme.set_role(self.save_btn, "primary")
         self.save_btn.clicked.connect(self.save_comparison_image)
         self.save_btn.setEnabled(False)
-        btn_layout.addWidget(self.save_btn)
+        save_row.addWidget(self.save_btn)
 
-        self.save_all_btn = QPushButton("📦 批量保存全部对比图")
+        self.save_all_btn = QPushButton("📦 批量保存")
+        self.save_all_btn.setToolTip("按 4 个常用指标批量生成并保存全部对比图")
         theme.set_role(self.save_all_btn, "success")
         self.save_all_btn.clicked.connect(self.save_all_comparisons)
-        btn_layout.addWidget(self.save_all_btn)
-
-        btn_layout.addStretch()
-        save_layout.addLayout(btn_layout)
-
-        compare_layout.addWidget(save_frame)
+        save_row.addWidget(self.save_all_btn)
+        compare_layout.addLayout(save_row)
         self.tabs.addTab(compare_tab, "🔍 曲线对比")
 
         content_layout.addWidget(self.tabs)
@@ -194,6 +177,21 @@ class ResultPreviewPage(BasePage):
         layout.addWidget(main_splitter, 1)
 
         self.load_experiments()
+
+    @staticmethod
+    def _tab_layout(tab):
+        """标签页统一内边距：卡片已提供外框，这里只留少量呼吸空间"""
+        lay = QVBoxLayout(tab)
+        lay.setContentsMargins(4, 10, 4, 4)
+        lay.setSpacing(10)
+        return lay
+
+    @staticmethod
+    def _zoom_hint():
+        hint = QLabel("双击图片可放大")
+        theme.set_role(hint, "hint")
+        hint.setToolTip("双击画布：在「固定尺寸」与「放大铺满」之间切换")
+        return hint
 
     def browse_dir(self, edit_widget):
         dir_path = QFileDialog.getExistingDirectory(self, "选择项目目录")
@@ -292,24 +290,20 @@ class ResultPreviewPage(BasePage):
             self.chart_combo.addItem(name, path)
 
         if chart_files:
-            self.chart_combo.currentIndexChanged.connect(self.on_chart_selected)
-            self.on_chart_selected(1)
+            self.chart_combo.setCurrentIndex(1)
+        else:
+            self.on_chart_selected(0)
 
     def on_chart_selected(self, index):
         if index == 0:
-            self.chart_label.setText("图表预览区域")
+            self.chart_label.clear_image()
             return
 
         chart_path = self.chart_combo.itemData(index)
         if chart_path and os.path.exists(chart_path):
-            from PyQt5.QtGui import QPixmap
-            pixmap = QPixmap(chart_path)
-            if not pixmap.isNull():
-                self.chart_label.setPixmap(pixmap.scaled(self.chart_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-            else:
-                self.chart_label.setText("无法加载图片")
+            self.chart_label.set_image(QPixmap(chart_path))
         else:
-            self.chart_label.setText("图表文件不存在")
+            self.chart_label.clear_image("图表文件不存在")
 
     def on_compare(self):
         exp_paths = self._checked_experiments()
@@ -391,17 +385,13 @@ class ResultPreviewPage(BasePage):
             self.current_metric = metric
             self.current_exp_paths = exp_paths
 
-            pixmap = QPixmap(temp_path)
-            if not pixmap.isNull():
-                self.compare_label.setPixmap(pixmap.scaled(self.compare_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-                self.save_btn.setEnabled(True)
-            else:
-                self.compare_label.setText("无法生成对比图")
+            self.compare_label.set_image(QPixmap(temp_path))
+            self.save_btn.setEnabled(self.compare_label.source_pixmap is not None)
         else:
-            self.compare_label.setText("生成对比图失败")
+            self.compare_label.clear_image("生成对比图失败")
             self.save_btn.setEnabled(False)
 
-        if hasattr(self, 'auto_save_checkbox') and self.auto_save_checkbox.isChecked():
+        if self.auto_save_checkbox.isChecked():
             self.auto_save_comparison(temp_path, metric, exp_paths)
 
     def on_auto_save_toggled(self, state):

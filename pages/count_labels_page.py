@@ -6,9 +6,10 @@ from PyQt5.QtWidgets import (QLabel, QLineEdit, QPushButton,
                              QTableWidgetItem, QHeaderView, QTextEdit, QMessageBox,
                              QFileDialog, QComboBox, QSizePolicy)
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt, QMetaObject, Q_ARG
+from PyQt5.QtCore import Qt, QMetaObject, Q_ARG, QTimer
 from pages.base_page import BasePage
 from utils import theme
+from utils.preview import ChartLabel
 from pathlib import Path
 from collections import defaultdict
 import os
@@ -42,13 +43,23 @@ CHART_TYPES = [("类别数量分布", "count"),
 
 SPLIT_NAMES = {'train': '训练集', 'valid': '验证集', 'val': '验证集', 'test': '测试集'}
 
+# 宽高比表格：数值列一行放不下三组统计，改为表头短名 + 单元格内两行带标签
+GEO_HEADERS = ["类别ID", "类别名称", "数量", "宽 W", "高 H", "宽高比 W/H", "宽范围", "高范围"]
+GEO_TIPS = {
+    3: "第一行 均值 / 中位数，第二行 P5~P95（中间 90% 的框落在此区间）",
+    4: "第一行 均值 / 中位数，第二行 P5~P95（中间 90% 的框落在此区间）",
+    5: "第一行 均值 / 中位数，第二行 P5~P95；接近 1 表示目标接近正方形",
+    6: "最小值 ~ 最大值",
+    7: "最小值 ~ 最大值",
+}
+
 
 class CountLabelsPage(BasePage):
     def __init__(self):
         super().__init__()
         self._geo = {}            # {'all': {cls: arr}, 'splits': {name: {cls: arr}}}
         self._class_names = {}
-        self._chart_pixmap = None
+        self._theme_scale = theme.scale_for_width(1280)
         self.init_ui()
 
     def init_ui(self):
@@ -102,6 +113,7 @@ class CountLabelsPage(BasePage):
         self.result_table = QTableWidget()
         self.result_table.setColumnCount(3)
         self.result_table.setHorizontalHeaderLabels(["类别ID", "类别名称", "数量"])
+        self._style_stat_table(self.result_table)
         self.result_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         result_layout.addWidget(self.result_table)
         layout.addWidget(result_card, 3)
@@ -118,16 +130,24 @@ class CountLabelsPage(BasePage):
         theme.set_role(self.summary_label, "hint")
         geo_layout.addWidget(self.summary_label)
 
+        geo_hint = QLabel("数值列说明：上行是 均值 / 中位数，下行是 P5~P95（中间 90% 的目标框所在区间）")
+        theme.set_role(geo_hint, "hint")
+        geo_layout.addWidget(geo_hint)
+
         self.geo_table = QTableWidget()
-        self.geo_table.setColumnCount(8)
-        self.geo_table.setHorizontalHeaderLabels(
-            ["类别ID", "类别名称", "数量", "宽 均值/中位/P5~P95", "高 均值/中位/P5~P95",
-             "宽高比 均值/中位/P5~P95", "宽范围", "高范围"])
-        # 数值列按内容取宽，避免 8 列等宽时数字被省略号截断
-        self.geo_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.geo_table.horizontalHeader().setStretchLastSection(True)
+        self.geo_table.setColumnCount(len(GEO_HEADERS))
+        self.geo_table.setHorizontalHeaderLabels(GEO_HEADERS)
+        self._style_stat_table(self.geo_table)
+        # 数值列按内容取宽（两行文本取较宽的一行），剩余宽度给类别名称列
+        geo_header = self.geo_table.horizontalHeader()
+        geo_header.setSectionResizeMode(QHeaderView.ResizeToContents)
+        geo_header.setSectionResizeMode(1, QHeaderView.Stretch)
+        geo_header.setMinimumSectionSize(60)
+        for col, tip in GEO_TIPS.items():
+            self.geo_table.horizontalHeaderItem(col).setToolTip(tip)
         geo_layout.addWidget(self.geo_table)
-        layout.addWidget(geo_card, 3)
+        # 数值单元格占两行，比数量统计卡片更高，给更大的拉伸比例
+        layout.addWidget(geo_card, 4)
 
         chart_card, chart_layout = theme.card()
         chart_layout.addLayout(theme.section_row("🖼️", "可视化图表"))
@@ -152,11 +172,8 @@ class CountLabelsPage(BasePage):
         chart_row.addWidget(self.save_chart_btn)
         chart_layout.addLayout(chart_row)
 
-        self.chart_label = QLabel("统计后点击图表类型即可查看分布")
-        self.chart_label.setAlignment(Qt.AlignCenter)
-        self.chart_label.setMinimumHeight(380)
-        theme.set_role(self.chart_label, "canvas")
-        chart_layout.addWidget(self.chart_label)
+        self.chart_label = ChartLabel("统计后点击图表类型即可查看分布", min_height=560)
+        chart_layout.addWidget(self.chart_label, 1)
         layout.addWidget(chart_card, 4)
 
         self.split_combo.currentIndexChanged.connect(self._refresh_chart)
@@ -295,6 +312,7 @@ class CountLabelsPage(BasePage):
 
         self.result_table.setColumnCount(len(headers))
         self.result_table.setHorizontalHeaderLabels(headers)
+        self._style_stat_table(self.result_table)
         self.result_table.setRowCount(len(all_labels))
         self.result_table.horizontalHeader().show()
 
@@ -304,13 +322,12 @@ class CountLabelsPage(BasePage):
             self.result_table.setItem(i, 1, QTableWidgetItem(class_name))
 
             col_idx = 2
-            for split_name in ordered_splits:
-                split_counts = split_results[split_name]
-                count = split_counts.get(label, 0)
-                self.result_table.setItem(i, col_idx, QTableWidgetItem(str(count)))
-                col_idx += 1
-
-            self.result_table.setItem(i, col_idx, QTableWidgetItem(str(all_counts[label])))
+            counts = [split_results[s].get(label, 0) for s in ordered_splits]
+            counts.append(all_counts[label])
+            for offset, count in enumerate(counts):
+                item = QTableWidgetItem(str(count))
+                item.setTextAlignment(Qt.AlignCenter)
+                self.result_table.setItem(i, col_idx + offset, item)
 
         self.result_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
@@ -323,6 +340,38 @@ class CountLabelsPage(BasePage):
             self.log(f"类别映射: {class_names}")
 
         self._display_geo(all_labels, split_results, ordered_splits)
+
+    @staticmethod
+    def _style_stat_table(table, left_cols=(0, 1)):
+        """统计表格统一排版：隐藏行号、去掉纵向网格线，用内边距拉开数字与边框"""
+        theme.set_role(table, "stat")
+        table.setAlternatingRowColors(True)
+        table.setShowGrid(False)
+        table.verticalHeader().hide()
+        # 列宽刚好容下两行文本时，Qt 会把整格折成一行加省略号，宁可少 1px 也不截断
+        table.setTextElideMode(Qt.ElideNone)
+        table.horizontalHeader().setDefaultAlignment(Qt.AlignCenter)
+        # 类别ID/名称列内容左对齐，表头跟随，避免标题与数字错位
+        for col in left_cols:
+            item = table.horizontalHeaderItem(col)
+            if item is not None:
+                item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
+    def _refit_stat_tables(self):
+        """两行单元格要按内容重算列宽行高；主题字号随窗口宽度换档后同样要重算。
+        数量统计表整表 Stretch，不需要按内容取宽。"""
+        self.geo_table.resizeColumnsToContents()
+        self.geo_table.resizeRowsToContents()
+        # resizeColumnsToContents 会把 Stretch 列压回内容宽度，重设一次让它吃满剩余空间
+        self.geo_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        scale = theme.scale_for_width(self.window().width())
+        if scale != self._theme_scale:
+            self._theme_scale = scale
+            # 换档时本页 resizeEvent 可能早于全局样式生效，延后一帧再按新字号量算
+            QTimer.singleShot(0, self._refit_stat_tables)
 
     def _display_geo(self, all_labels, split_results, ordered_splits):
         """填充宽高比表格、总体摘要与图表下拉框"""
@@ -339,13 +388,16 @@ class CountLabelsPage(BasePage):
             class_name = self._class_names.get(label, f"类别 {label}")
             cells = [str(label), class_name, f"{s['count']}",
                      self._fmt_trio(s['w']), self._fmt_trio(s['h']), self._fmt_trio(s['ar']),
-                     f"{s['w']['mn']:.3f}~{s['w']['mx']:.3f}",
-                     f"{s['h']['mn']:.3f}~{s['h']['mx']:.3f}"]
+                     f"{s['w']['mn']:.3f} ~ {s['w']['mx']:.3f}",
+                     f"{s['h']['mn']:.3f} ~ {s['h']['mx']:.3f}"]
             for col, text in enumerate(cells):
                 item = QTableWidgetItem(text)
                 if col >= 2:
                     item.setTextAlignment(Qt.AlignCenter)
                 self.geo_table.setItem(i, col, item)
+
+        # 两行单元格需要按内容重新计算行高/列宽，否则第二行会被裁掉
+        self._refit_stat_tables()
 
         all_arr = self._concat(self._geo.get('all', {}))
         if all_arr is None:
@@ -394,7 +446,8 @@ class CountLabelsPage(BasePage):
 
     @staticmethod
     def _fmt_trio(b):
-        return f"{b['mean']:.3f}/{b['med']:.3f}/{b['p5']:.2f}~{b['p95']:.2f}"
+        return (f"均值 {b['mean']:.3f} 中位 {b['med']:.3f}\n"
+                f"P5~P95 {b['p5']:.3f}~{b['p95']:.3f}")
 
     def _summary_html(self, arr):
         s = self._stat_block(arr)
@@ -442,22 +495,10 @@ class CountLabelsPage(BasePage):
             return
         pixmap = QPixmap(path)
         if pixmap.isNull():
-            self.chart_label.setText("图表生成失败")
+            self.chart_label.clear_image("图表生成失败")
             return
-        self._chart_pixmap = pixmap
-        self._scale_chart()
+        self.chart_label.set_image(pixmap)
         self.save_chart_btn.setEnabled(True)
-
-    def _scale_chart(self):
-        if self._chart_pixmap is None:
-            return
-        self.chart_label.setPixmap(
-            self._chart_pixmap.scaled(self.chart_label.size(),
-                                      Qt.KeepAspectRatio, Qt.SmoothTransformation))
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self._scale_chart()
 
     @staticmethod
     def _use_cjk_font():
@@ -594,11 +635,12 @@ class CountLabelsPage(BasePage):
             tick.set_ha('right')
 
     def save_chart(self):
-        if self._chart_pixmap is None:
+        pixmap = self.chart_label.source_pixmap
+        if pixmap is None:
             QMessageBox.warning(self, "提示", "请先生成图表")
             return
         path, _ = QFileDialog.getSaveFileName(self, "保存图表", "", "PNG图片 (*.png)")
-        if path and self._chart_pixmap.save(path):
+        if path and pixmap.save(path):
             self.log(f"图表已保存: {path}")
 
     def on_task_finished(self, success, msg):

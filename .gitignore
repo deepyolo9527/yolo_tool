@@ -11,3 +11,4 @@ dist/
 *.spec
 *resluts
 .vscode/
+*.mark

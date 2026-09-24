@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QPushButton,
                              QMessageBox, QFileDialog, QDoubleSpinBox, QProgressBar,
                              QCheckBox)
 from PyQt5.QtCore import Qt, QMetaObject, Q_ARG
+from PyQt5.QtGui import QPixmap
 from pages.base_page import BasePage
 from utils import theme
 from utils.preview import PreviewLabel, bgr_to_pixmap
@@ -15,6 +16,7 @@ import os
 
 
 project_root = get_app_dir()
+IMAGE_EXTS = ('.jpg', '.jpeg', '.png', '.bmp', '.tiff')
 
 
 class ImageInferencePage(BasePage):
@@ -54,6 +56,7 @@ class ImageInferencePage(BasePage):
             0, 0, 1, 2)
 
         self.image_edit = QLineEdit()
+        self.image_edit.editingFinished.connect(self._preview_source)
         grid.addWidget(theme.field("图片/目录:", theme.path_row(
             self.image_edit, "请选择图片文件或目录", self.browse_images, "🖼️")),
             0, 2, 1, 2)
@@ -131,10 +134,8 @@ class ImageInferencePage(BasePage):
         header.addWidget(theme.section("推理可视化"))
         header.addStretch()
 
-        self.prev_btn = QPushButton("◀")
+        self.prev_btn = QPushButton("上一张")
         theme.set_role(self.prev_btn, "primary")
-        self.prev_btn.setFixedWidth(46)
-        self.prev_btn.setToolTip("上一张")
         self.prev_btn.clicked.connect(self._show_prev)
         header.addWidget(self.prev_btn)
 
@@ -142,10 +143,8 @@ class ImageInferencePage(BasePage):
         theme.set_role(self.view_info, "status")
         header.addWidget(self.view_info)
 
-        self.next_btn = QPushButton("▶")
+        self.next_btn = QPushButton("下一张")
         theme.set_role(self.next_btn, "primary")
-        self.next_btn.setFixedWidth(46)
-        self.next_btn.setToolTip("下一张")
         self.next_btn.clicked.connect(self._show_next)
         header.addWidget(self.next_btn)
 
@@ -158,7 +157,7 @@ class ImageInferencePage(BasePage):
         left_title = QLabel("原图")
         theme.set_role(left_title, "hint")
         left.addWidget(left_title)
-        self.orig_view = PreviewLabel("尚未推理，画面将显示在此处")
+        self.orig_view = PreviewLabel("选择图片后在此预览原图")
         left.addWidget(self.orig_view, 1)
         views.addLayout(left, 1)
 
@@ -226,6 +225,30 @@ class ImageInferencePage(BasePage):
                 self.image_edit.setText(file_paths[0])
             else:
                 self.image_edit.setText(";".join(file_paths))
+            self._preview_source()
+
+    def _preview_source(self):
+        """选定图片后立刻在左侧显示原图，不必等到点击开始推理"""
+        path = self._first_image(self.image_edit.text().strip())
+        if not path:
+            return
+        pixmap = QPixmap(path)
+        if not pixmap.isNull():
+            self.orig_view.set_pixmap(pixmap)
+            self.view_info.setToolTip(os.path.basename(path))
+
+    @staticmethod
+    def _first_image(text):
+        """从「单文件 / 分号拼接的多文件 / 目录」里取第一张存在的图片"""
+        if not text:
+            return ""
+        first = text.split(';')[0].strip()
+        if os.path.isdir(first):
+            for name in sorted(os.listdir(first)):
+                if os.path.splitext(name)[1].lower() in IMAGE_EXTS:
+                    return os.path.join(first, name)
+            return ""
+        return first if os.path.isfile(first) else ""
 
     def browse_output_dir(self):
         dir_path = QFileDialog.getExistingDirectory(self, "选择输出目录")
@@ -266,10 +289,9 @@ class ImageInferencePage(BasePage):
         elif os.path.isfile(image_input):
             image_paths.append(image_input)
         elif os.path.isdir(image_input):
-            img_exts = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']
             for f in os.listdir(image_input):
                 ext = os.path.splitext(f)[1].lower()
-                if ext in img_exts:
+                if ext in IMAGE_EXTS:
                     image_paths.append(os.path.join(image_input, f))
 
         if not image_paths:
