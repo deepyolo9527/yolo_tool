@@ -1,6 +1,8 @@
+<img width="2555" height="1375" alt="一键环境配置" src="https://github.com/user-attachments/assets/c24f9d15-fccd-4ce6-9a0d-82480bfa8ba9" />
 # 🤖 YOLO AI 训练系统
 
 基于 PyQt5 的图形化 YOLO 工具箱，把 **配环境 → 标数据 → 看分布 → 训练 → 验证 → 推理 → 导出** 整条流程集中在一个窗口里完成，不需要手写命令行。
+<img width="2546" height="1364" alt="数据标注" src="https://github.com/user-attachments/assets/c8ede744-d79f-47fd-948e-4a5b4780c8f5" />
 
 > 本文是完整操作说明。软件内点击顶部 **`ℹ️ 关于系统`** 可随时打开同一份帮助（离线渲染，也可用浏览器打开 `assets/help.html`）。
 
@@ -107,6 +109,8 @@
 ---
 
 ## 4. 数据标注 ✏️
+<img width="2546" height="1364" alt="数据标注" src="https://github.com/user-attachments/assets/7634d3f2-8072-4994-875d-f761e19f771b" />
+<img width="2555" height="1438" alt="视频推理" src="https://github.com/user-attachments/assets/6aea90e4-040e-45eb-85b8-484d240d5295" />
 
 页面说明：「手动框标注 / SAM 图片分割 / AI 预标注，支持类别管理与标注统计」。中间是图片画布，右侧一列功能卡片。
 
@@ -166,7 +170,7 @@
 ---
 
 ## 5. SAM视频追踪 🎬
-
+<img width="2555" height="1438" alt="视频推理" src="https://github.com/user-attachments/assets/13d65352-bd4f-4c49-8604-ca421f1e735b" />
 页面说明：「首帧画框一次，SAM2 逐帧自动追踪，按帧导出图片与 YOLO 标签」。适合把一段视频快速变成几千张带标注的训练图。
 
 ### 5.1 控件
@@ -235,6 +239,7 @@
 ---
 
 ## 7. 模型训练 🚀
+<img width="2560" height="1436" alt="yolo训练" src="https://github.com/user-attachments/assets/f591d738-96b2-46dc-9c4f-ba8daac2c05f" />
 
 页面说明：「配置训练参数，启动YOLO模型训练」。参数按卡片分组，顶部是运行控制与日志，往下依次是「📦 模型与数据」「⚙️ 训练参数」「🎨 数据增强」「🔧 其他选项」，每卡 6 列网格排版。
 
@@ -394,6 +399,7 @@ runs/train/exp/
 ---
 
 ## 11. 结果预览 📈
+<img width="2560" height="1438" alt="结果预览" src="https://github.com/user-attachments/assets/ad1063db-9a90-4c31-acee-bada878f9424" />
 
 页面说明：「查看训练实验结果，对比不同训练配置的效果」。顶部填「项目目录」（默认 `runs/train`）+ `📁 浏览` + `🔄 刷新`；左侧实验列表，右侧三个标签页。
 
